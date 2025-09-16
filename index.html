@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Raya</title>
+    <title>Gestión de Raya Simplificada</title>
     <meta name="theme-color" content="#2a7de1"/>
     <!-- Manifiesto PWA embebido para capacidad de instalación -->
     <link rel="manifest" href='data:application/manifest+json,{
@@ -38,7 +38,7 @@
             background-color: var(--secondary-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 0; /* quitar márgenes laterales grandes */
         }
 
         .container {
@@ -53,7 +53,8 @@
         header {
             background-color: var(--primary-color);
             color: white;
-            padding: 16px 20px;
+            padding: 12px 16px; /* más compacto */
+            border-bottom: 1px solid rgba(0,0,0,0.06); /* sutil divisor */
         }
 
         header h1 {
@@ -62,15 +63,15 @@
         }
 
         main {
-            padding: 25px;
+            padding: 12px 16px; /* reducir padding general */
         }
 
         .card {
             background-color: #fff;
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
+            padding: 16px;
+            margin: 12px 0 16px; /* menos espacios verticales */
         }
 
         .card h2 {
@@ -290,11 +291,11 @@
             --shadow-color: rgba(15, 23, 42, 0.08);
         }
 
-        /* Modo oscuro eliminado */
-        .container { max-width: 100%; background-color: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
-        header { background: linear-gradient(135deg, var(--primary-color), #265fd5); text-align: unset; }
+    /* Modo oscuro eliminado */
+    .container { max-width: 100%; background-color: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
+    header { background: var(--primary-color); text-align: unset; } /* quitar degradado que se ve "improlijo" */
         .header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        header h1 { font-size: 1.6em; letter-spacing: .2px; }
+    header h1 { font-size: 1.45em; letter-spacing: .2px; margin: 0; }
 
         .form-group input { border-radius: 8px; background: transparent; color: var(--text-color); }
         .form-group input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(31,111,235,0.15); }
@@ -326,13 +327,8 @@
 
         /* --- Estilos Responsivos para Móviles --- */
         @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-
-            main {
-                padding: 15px;
-            }
+            body { padding: 0; }
+            main { padding: 10px 12px; }
 
             header h1 {
                 font-size: 1.5em;
@@ -373,7 +369,7 @@
     <div class="container">
         <header>
             <div class="header-bar">
-                <h1>Gestión de Raya</h1>
+                <h1>Gestión de Raya Simplificada</h1>
             </div>
         </header>
 
@@ -1001,6 +997,4 @@
     </script>
 </body>
 </html>
-
-
 
