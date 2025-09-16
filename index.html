@@ -83,9 +83,9 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            align-items: flex-end;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            align-items: start; /* alinea todos arriba para evitar saltos visuales */
         }
 
         .form-group {
@@ -108,6 +108,12 @@
             width: 18px;
             height: 18px;
             align-self: flex-start;
+        }
+
+        .form-group.checkbox-group { align-self: center; }
+        .form-group.button-group { align-self: end; }
+        @media (max-width: 600px) {
+            .form-group.button-group { align-self: stretch; }
         }
 
         .hint {
@@ -217,26 +223,29 @@
         
         /* Modal Styles */
         .modal {
-            display: none;
+            display: none; /* se cambiará a flex desde JS */
             position: fixed;
             z-index: 1000;
-            left: 0;
-            top: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
             background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
         }
 
         .modal-content {
             background-color: #fefefe;
-            margin: 15% auto;
             padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 520px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+            margin: 0;
         }
         
         .modal-header {
@@ -349,14 +358,8 @@
                 align-items: flex-start;
             }
 
-            .worker-actions {
-                width: 100%;
-                margin-top: 15px;
-            }
-            
-            .worker-actions button {
-                flex-grow: 1; /* Hace que los botones compartan el espacio */
-            }
+            .worker-actions { width: 100%; margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+            .worker-actions button { width: 100%; }
 
             /* Ajusta las pestañas para pantallas pequeñas */
             .tabs {
@@ -369,10 +372,8 @@
             }
 
             /* Mejora la visualización de modales en móvil */
-            .modal-content {
-                width: 90%;
-                margin: 20px auto; /* Mejor para el desplazamiento en pantallas cortas */
-            }
+            .modal { padding: 12px; }
+            .modal-content { width: 100%; max-width: 520px; max-height: 85vh; }
         }
 
     </style>
@@ -401,12 +402,12 @@
                         <input type="number" id="daily-salary" placeholder="Ej: 250.00" min="0" step="0.01">
                         <span class="hint">MXN por día</span>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group checkbox-group">
                         <label for="activate-on-create">Activar en ciclo actual</label>
                         <input type="checkbox" id="activate-on-create" />
                     </div>
-                    <div class="form-group">
-                        <button id="add-worker-btn" class="btn-primary">Registrar</button>
+                    <div class="form-group button-group">
+                        <button id="add-worker-btn" class="btn btn-primary" style="width:100%">Registrar</button>
                     </div>
                 </div>
             </div>
@@ -738,7 +739,7 @@
             }
             
             // --- Lógica de Modales ---
-            function openModal(modal) { modal.style.display = 'block'; }
+            function openModal(modal) { modal.style.display = 'flex'; }
             function closeModal(modal) { modal.style.display = 'none'; }
             
             // --- Eventos ---
