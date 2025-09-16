@@ -268,6 +268,63 @@
             color: var(--success-color);
         }
 
+        /* --- Overrides modernos y modo oscuro --- */
+        :root {
+            --primary-color: #1f6feb;
+            --secondary-color: #f6f8fa;
+            --text-color: #1f2937;
+            --muted-text: #6b7280;
+            --border-color: #e5e7eb;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --white-color: #ffffff;
+            --shadow-color: rgba(15, 23, 42, 0.08);
+            --card-bg: #ffffff;
+        }
+
+        body.dark {
+            --secondary-color: #0b1220;
+            --text-color: #e5e7eb;
+            --muted-text: #94a3b8;
+            --border-color: #1f2937;
+            --card-bg: #0f172a;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .container { max-width: 980px; background-color: var(--card-bg); box-shadow: 0 8px 24px var(--shadow-color); }
+        header { background: linear-gradient(135deg, var(--primary-color), #265fd5); text-align: unset; }
+        .header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        header h1 { font-size: 1.6em; letter-spacing: .2px; }
+
+        .form-group input { border-radius: 8px; background: transparent; color: var(--text-color); }
+        .form-group input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(31,111,235,0.15); }
+
+        /* Botones modernos */
+        .btn, button { border-radius: 8px; }
+        .btn { background: #e5e7eb; color: #111827; }
+        .btn:hover { filter: brightness(0.98); }
+        .btn-primary { background-color: var(--primary-color); color: #fff; width: auto; }
+        .form-grid .btn-primary { width: 100%; }
+        .btn-secondary { background-color: #64748b; color: #fff; }
+        .btn-success { background-color: var(--success-color); color: #fff; }
+        .btn-danger { background-color: var(--danger-color); color: #fff; }
+        .btn-info { background-color: var(--info-color); color: #fff; }
+        .btn-light { background: rgba(255,255,255,0.9); color: #111827; }
+
+        /* Pestañas estilo píldora */
+        .tabs { gap: 8px; background: rgba(31,111,235,0.06); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
+        .tab-link { padding: 10px 14px; border: 1px solid transparent; color: var(--muted-text); border-radius: 999px; }
+        .tab-link:hover { background: rgba(31,111,235,0.06); color: var(--text-color); }
+        .tab-link.active { color: #fff; background: var(--primary-color); border-color: var(--primary-color); }
+
+        /* Tabla de historial */
+        #payment-log-list { overflow-x: auto; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .table th { color: var(--muted-text); font-weight: 700; font-size: 0.9em; }
+        .table tbody tr:hover { background: rgba(31,111,235,0.05); }
+
         /* --- Estilos Responsivos para Móviles --- */
         @media (max-width: 600px) {
             body {
@@ -324,7 +381,10 @@
 
     <div class="container">
         <header>
-            <h1>Gestión de Raya Simplificada</h1>
+            <div class="header-bar">
+                <h1>Gestión de Raya Simplificada</h1>
+                <button id="theme-toggle" class="btn btn-light">Modo oscuro</button>
+            </div>
         </header>
 
         <main>
@@ -487,6 +547,7 @@
             const summaryNet = document.getElementById('summary-net');
             const confirmSettleBtn = document.getElementById('confirm-settle-btn');
             const cancelSettleBtn = document.getElementById('cancel-settle-btn');
+            const themeToggleBtn = document.getElementById('theme-toggle');
 
             // Filtros y exportaciones Historial
             const filterNameInput = document.getElementById('filter-name');
@@ -512,6 +573,12 @@
                 paymentLog = storedLog ? JSON.parse(storedLog) : [];
                 migrateStorage();
                 renderApp();
+                // Inicializar tema
+                const savedTheme = localStorage.getItem('simplePayrollTheme');
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark');
+                    if (themeToggleBtn) themeToggleBtn.textContent = 'Modo claro';
+                }
             }
 
             function saveData() {
@@ -631,20 +698,35 @@
                     paymentLogListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay pagos en el historial.</p>';
                 } else {
                     filteredLog.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+                    const table = document.createElement('table');
+                    table.className = 'table';
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>Trabajador</th>
+                                <th>Fecha</th>
+                                <th>Días</th>
+                                <th>Bruto</th>
+                                <th>Préstamo</th>
+                                <th>Pagado</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    `;
+                    const tbody = table.querySelector('tbody');
                     filteredLog.forEach(log => {
-                        const logItem = document.createElement('div');
-                        logItem.className = 'log-item';
-                        logItem.innerHTML = `
-                            <div class="log-info">
-                                <span><strong>${log.workerName}</strong></span>
-                                <span>Pagado el: ${new Date(log.paymentDate).toLocaleDateString()}</span>
-                            </div>
-                            <div class="log-amount" style="text-align: right;">
-                                <div><span style="color: var(--success-color); font-weight: bold;">${formatCurrency(log.netPay)}</span> <small>(${log.daysWorked} días)</small></div>
-                                <div><small>Bruto: ${formatCurrency(log.grossPay || (log.daysWorked * (workers.find(w=>w.id==log.workerId)?.dailySalary||0)))} | Préstamo: ${formatCurrency(log.loanApplied || 0)}</small></div>
-                            </div>`;
-                        paymentLogListDiv.appendChild(logItem);
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${log.workerName}</td>
+                            <td>${new Date(log.paymentDate).toLocaleDateString()}</td>
+                            <td>${log.daysWorked}</td>
+                            <td>${formatCurrency(log.grossPay || (log.daysWorked * (workers.find(w=>w.id==log.workerId)?.dailySalary||0)))}</td>
+                            <td>${formatCurrency(log.loanApplied || 0)}</td>
+                            <td><strong style="color: var(--success-color);">${formatCurrency(log.netPay)}</strong></td>
+                        `;
+                        tbody.appendChild(tr);
                     });
+                    paymentLogListDiv.appendChild(table);
                 }
 
                 // Totales
@@ -820,6 +902,15 @@
             window.onclick = function(event) {
                 if (event.target == loanModal) closeModal(loanModal);
                 if (event.target == settleModal) closeModal(settleModal);
+            }
+
+            // Toggle Tema oscuro/claro
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', () => {
+                    const nowDark = document.body.classList.toggle('dark');
+                    localStorage.setItem('simplePayrollTheme', nowDark ? 'dark' : 'light');
+                    themeToggleBtn.textContent = nowDark ? 'Modo claro' : 'Modo oscuro';
+                });
             }
 
             // --- Historial: filtros y exportación ---
