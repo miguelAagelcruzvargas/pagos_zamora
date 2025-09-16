@@ -397,7 +397,6 @@
                             <div class="actions">
                                 <button id="clear-filters" class="btn-secondary">Limpiar filtros</button>
                                 <button id="export-csv" class="btn-info">Exportar CSV</button>
-                                <button id="export-json" class="btn-info">Exportar JSON</button>
                             </div>
                         </div>
                     </div>
@@ -495,7 +494,6 @@
             const filterToInput = document.getElementById('filter-to');
             const clearFiltersBtn = document.getElementById('clear-filters');
             const exportCsvBtn = document.getElementById('export-csv');
-            const exportJsonBtn = document.getElementById('export-json');
             const summaryCountSpan = document.getElementById('summary-count');
             const summaryTotalSpan = document.getElementById('summary-total');
 
@@ -880,10 +878,7 @@
                 download(`historial_pagos_${new Date().toISOString().slice(0,10)}.csv`, csv, 'text/csv');
             });
 
-            if (exportJsonBtn) exportJsonBtn.addEventListener('click', () => {
-                const payload = { version: APP_VERSION, exportedAt: new Date().toISOString(), logs: getFilteredLogs() };
-                download(`historial_pagos_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(payload, null, 2), 'application/json');
-            });
+            // Exportación JSON removida por solicitud del usuario
 
             // --- Lógica PWA: Registro del Service Worker ---
             function registerServiceWorker() {
