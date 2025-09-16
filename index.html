@@ -104,6 +104,17 @@
             border-radius: 6px;
         }
 
+        .form-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            align-self: flex-start;
+        }
+
+        .hint {
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
         button {
             padding: 10px 15px;
             border: none;
@@ -192,6 +203,17 @@
         .tab-content .card {
             margin-bottom: 0; /* Remove margin from cards inside tabs */
         }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-secondary { background-color: #6c757d; color: #fff; }
+        .btn-success { background-color: var(--success-color); color: #fff; }
+        .btn-danger { background-color: var(--danger-color); color: #fff; }
+        .btn-info { background-color: var(--info-color); color: #fff; }
         
         /* Modal Styles */
         .modal {
@@ -316,7 +338,12 @@
                     </div>
                     <div class="form-group">
                         <label for="daily-salary">Sueldo por Día</label>
-                        <input type="number" id="daily-salary" placeholder="Ej: 250.00">
+                        <input type="number" id="daily-salary" placeholder="Ej: 250.00" min="0" step="0.01">
+                        <span class="hint">MXN por día</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="activate-on-create">Activar en ciclo actual</label>
+                        <input type="checkbox" id="activate-on-create" />
                     </div>
                     <div class="form-group">
                         <button id="add-worker-btn" class="btn-primary">Registrar</button>
@@ -352,8 +379,40 @@
             <div id="tab-historial" class="tab-content">
                 <div class="card">
                     <h2>Historial de Pagos</h2>
+                    <div class="form-grid" style="margin-bottom: 10px;">
+                        <div class="form-group">
+                            <label for="filter-name">Filtrar por nombre</label>
+                            <input type="search" id="filter-name" placeholder="Buscar trabajador...">
+                        </div>
+                        <div class="form-group">
+                            <label for="filter-from">Desde</label>
+                            <input type="date" id="filter-from">
+                        </div>
+                        <div class="form-group">
+                            <label for="filter-to">Hasta</label>
+                            <input type="date" id="filter-to">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <div class="actions">
+                                <button id="clear-filters" class="btn-secondary">Limpiar filtros</button>
+                                <button id="export-csv" class="btn-info">Exportar CSV</button>
+                                <button id="export-json" class="btn-info">Exportar JSON</button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="payment-log-list">
                         <!-- El registro de pagos se insertará aquí -->
+                    </div>
+                    <div id="payment-log-summary" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Totales visibles:</strong>
+                            <span id="summary-count">0 pagos</span>
+                        </div>
+                        <div>
+                            <strong>Total pagado:</strong>
+                            <span id="summary-total">$0.00</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -408,6 +467,7 @@
             const paymentLogListDiv = document.getElementById('payment-log-list');
             const workerNameInput = document.getElementById('worker-name');
             const dailySalaryInput = document.getElementById('daily-salary');
+            const activateOnCreateInput = document.getElementById('activate-on-create');
 
             // Elementos de las Pestañas
             const tabsContainer = document.querySelector('.tabs');
@@ -429,10 +489,22 @@
             const confirmSettleBtn = document.getElementById('confirm-settle-btn');
             const cancelSettleBtn = document.getElementById('cancel-settle-btn');
 
+            // Filtros y exportaciones Historial
+            const filterNameInput = document.getElementById('filter-name');
+            const filterFromInput = document.getElementById('filter-from');
+            const filterToInput = document.getElementById('filter-to');
+            const clearFiltersBtn = document.getElementById('clear-filters');
+            const exportCsvBtn = document.getElementById('export-csv');
+            const exportJsonBtn = document.getElementById('export-json');
+            const summaryCountSpan = document.getElementById('summary-count');
+            const summaryTotalSpan = document.getElementById('summary-total');
+
             let workers = [];
             let paymentLog = [];
             let currentWorkerId = null;
             let currentPaymentData = {};
+
+            const APP_VERSION = '1.1.0';
 
             // --- Funciones de Datos y UI ---
             function loadData() {
@@ -440,16 +512,51 @@
                 workers = storedWorkers ? JSON.parse(storedWorkers) : [];
                 const storedLog = localStorage.getItem('simplePayrollLog');
                 paymentLog = storedLog ? JSON.parse(storedLog) : [];
+                migrateStorage();
                 renderApp();
             }
 
             function saveData() {
                 localStorage.setItem('simplePayrollWorkers', JSON.stringify(workers));
                 localStorage.setItem('simplePayrollLog', JSON.stringify(paymentLog));
+                localStorage.setItem('simplePayrollVersion', APP_VERSION);
             }
 
             function formatCurrency(amount) {
                 return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+            }
+
+            function round2(n) {
+                return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+            }
+
+            function migrateStorage() {
+                const version = localStorage.getItem('simplePayrollVersion') || '1.0.0';
+                // Asegura campos nuevos
+                workers = (workers || []).map(w => ({
+                    id: w.id ?? Date.now(),
+                    name: w.name ?? '',
+                    dailySalary: Number(w.dailySalary) || 0,
+                    loanAmount: Number(w.loanAmount) || 0,
+                    loanDate: w.loanDate || null,
+                    isActive: Boolean(w.isActive),
+                    createdAt: w.createdAt || new Date().toISOString(),
+                    updatedAt: w.updatedAt || new Date().toISOString(),
+                }));
+                paymentLog = (paymentLog || []).map(l => ({
+                    logId: l.logId ?? Date.now(),
+                    workerId: l.workerId,
+                    workerName: l.workerName,
+                    paymentDate: l.paymentDate || new Date().toISOString(),
+                    daysWorked: Number(l.daysWorked) || 0,
+                    grossPay: l.grossPay !== undefined ? Number(l.grossPay) : (Number(l.daysWorked) * (workers.find(w => w.id == l.workerId)?.dailySalary || 0)),
+                    loanApplied: l.loanApplied !== undefined ? Number(l.loanApplied) : Math.min(Number(l.grossPay || 0), Number(workers.find(w => w.id == l.workerId)?.loanAmount || 0)),
+                    netPay: l.netPay !== undefined ? Number(l.netPay) : Math.max(0, (Number(l.grossPay || 0) - Number(l.loanApplied || 0)))
+                }));
+                // Guardar si hicimos cambios de migración
+                localStorage.setItem('simplePayrollVersion', APP_VERSION);
+                localStorage.setItem('simplePayrollWorkers', JSON.stringify(workers));
+                localStorage.setItem('simplePayrollLog', JSON.stringify(paymentLog));
             }
 
             function renderApp() {
@@ -496,17 +603,37 @@
                                 <span>Sueldo Diario: ${formatCurrency(worker.dailySalary)}</span>
                             </div>
                             <div class="worker-actions">
-                                <button class="activate-btn" data-id="${worker.id}" style="background-color: var(--info-color); color: white;">Activar</button>
+                                <button class="activate-btn" data-id="${worker.id}" class="btn-info" style="background-color: var(--info-color); color: white;">Activar</button>
+                                <button class="edit-worker-btn" data-id="${worker.id}" class="btn-secondary">Editar</button>
+                                <button class="delete-worker-btn" data-id="${worker.id}" class="btn-danger">Eliminar</button>
                             </div>`;
                         registeredWorkerListDiv.appendChild(workerItem);
                     });
                 }
 
-                if (paymentLog.length === 0) {
+                // Aplicar filtros al historial
+                const nameFilter = (filterNameInput?.value || '').trim().toLowerCase();
+                const fromDate = filterFromInput?.value ? new Date(filterFromInput.value) : null;
+                const toDate = filterToInput?.value ? new Date(filterToInput.value) : null;
+
+                let filteredLog = [...paymentLog];
+                if (nameFilter) {
+                    filteredLog = filteredLog.filter(l => (l.workerName || '').toLowerCase().includes(nameFilter));
+                }
+                if (fromDate) {
+                    filteredLog = filteredLog.filter(l => new Date(l.paymentDate) >= fromDate);
+                }
+                if (toDate) {
+                    const toEnd = new Date(toDate);
+                    toEnd.setHours(23,59,59,999);
+                    filteredLog = filteredLog.filter(l => new Date(l.paymentDate) <= toEnd);
+                }
+
+                if (filteredLog.length === 0) {
                     paymentLogListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay pagos en el historial.</p>';
                 } else {
-                    paymentLog.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
-                    paymentLog.forEach(log => {
+                    filteredLog.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+                    filteredLog.forEach(log => {
                         const logItem = document.createElement('div');
                         logItem.className = 'log-item';
                         logItem.innerHTML = `
@@ -515,11 +642,18 @@
                                 <span>Pagado el: ${new Date(log.paymentDate).toLocaleDateString()}</span>
                             </div>
                             <div class="log-amount" style="text-align: right;">
-                                <span style="color: var(--success-color); font-weight: bold;">${formatCurrency(log.netPay)}</span>
-                                <small>(${log.daysWorked} días)</small>
+                                <div><span style="color: var(--success-color); font-weight: bold;">${formatCurrency(log.netPay)}</span> <small>(${log.daysWorked} días)</small></div>
+                                <div><small>Bruto: ${formatCurrency(log.grossPay || (log.daysWorked * (workers.find(w=>w.id==log.workerId)?.dailySalary||0)))} | Préstamo: ${formatCurrency(log.loanApplied || 0)}</small></div>
                             </div>`;
                         paymentLogListDiv.appendChild(logItem);
                     });
+                }
+
+                // Totales
+                const total = (filteredLog || []).reduce((acc, l) => acc + Number(l.netPay || 0), 0);
+                if (summaryCountSpan && summaryTotalSpan) {
+                    summaryCountSpan.textContent = `${filteredLog.length} ${filteredLog.length === 1 ? 'pago' : 'pagos'}`;
+                    summaryTotalSpan.textContent = formatCurrency(round2(total));
                 }
             }
             
@@ -545,15 +679,24 @@
             addWorkerBtn.addEventListener('click', () => {
                 const name = workerNameInput.value.trim();
                 const dailySalary = parseFloat(dailySalaryInput.value);
+                if (!name) { alert('Ingrese un nombre válido.'); return; }
+                if (!(dailySalary > 0)) { alert('Ingrese un sueldo diario válido (> 0).'); return; }
+                // evitar duplicados por nombre (insensible a mayúsculas)
+                const exists = workers.some(w => (w.name || '').trim().toLowerCase() === name.toLowerCase());
+                if (exists) { alert('Ya existe un trabajador con ese nombre.'); return; }
+                const isActive = !!activateOnCreateInput?.checked;
+                const now = new Date().toISOString();
                 if (name && dailySalary > 0) {
                     workers.push({
-                        id: Date.now(), name, dailySalary,
-                        loanAmount: 0, loanDate: null, isActive: false
+                        id: Date.now(), name, dailySalary: round2(dailySalary),
+                        loanAmount: 0, loanDate: null, isActive,
+                        createdAt: now, updatedAt: now
                     });
                     saveData();
                     renderApp();
                     workerNameInput.value = '';
                     dailySalaryInput.value = '';
+                    if (activateOnCreateInput) activateOnCreateInput.checked = false;
                 } else {
                     alert('Por favor, ingrese un nombre y un sueldo diario válidos.');
                 }
@@ -579,10 +722,47 @@
             });
 
             registeredWorkerListDiv.addEventListener('click', (e) => {
-                if (e.target.classList.contains('activate-btn')) {
-                    const workerId = e.target.dataset.id;
+                const target = e.target;
+                if (target.classList.contains('activate-btn')) {
+                    const workerId = target.dataset.id;
                     const workerIndex = workers.findIndex(w => w.id == workerId);
                     workers[workerIndex].isActive = true;
+                    workers[workerIndex].updatedAt = new Date().toISOString();
+                    saveData();
+                    renderApp();
+                }
+                if (target.classList.contains('edit-worker-btn')) {
+                    const workerId = target.dataset.id;
+                    const idx = workers.findIndex(w => w.id == workerId);
+                    const w = workers[idx];
+                    const newName = prompt('Editar nombre del trabajador:', w.name);
+                    if (newName === null) return; // cancelado
+                    const trimmed = newName.trim();
+                    if (!trimmed) { alert('El nombre no puede estar vacío.'); return; }
+                    const dup = workers.some(x => x.id != w.id && (x.name||'').trim().toLowerCase() === trimmed.toLowerCase());
+                    if (dup) { alert('Ya existe otro trabajador con ese nombre.'); return; }
+                    const newSalaryStr = prompt('Editar sueldo diario (MXN):', String(w.dailySalary));
+                    if (newSalaryStr === null) return;
+                    const newSalary = parseFloat(newSalaryStr);
+                    if (!(newSalary > 0)) { alert('Sueldo inválido.'); return; }
+                    w.name = trimmed;
+                    w.dailySalary = round2(newSalary);
+                    w.updatedAt = new Date().toISOString();
+                    saveData();
+                    renderApp();
+                }
+                if (target.classList.contains('delete-worker-btn')) {
+                    const workerId = target.dataset.id;
+                    const idx = workers.findIndex(w => w.id == workerId);
+                    const w = workers[idx];
+                    if (!w) return;
+                    if (w.loanAmount > 0) {
+                        const proceed = confirm(`El trabajador tiene un préstamo pendiente de ${formatCurrency(w.loanAmount)}. ¿Eliminar de todas formas? Esta acción no elimina pagos históricos.`);
+                        if (!proceed) return;
+                    }
+                    const confirmDelete = confirm('¿Seguro que desea eliminar al trabajador? Esta acción no se puede deshacer.');
+                    if (!confirmDelete) return;
+                    workers.splice(idx, 1);
                     saveData();
                     renderApp();
                 }
@@ -592,8 +772,9 @@
                 const amount = parseFloat(loanAmountInput.value);
                 if (amount > 0) {
                     const workerIndex = workers.findIndex(w => w.id == currentWorkerId);
-                    workers[workerIndex].loanAmount = amount;
+                    workers[workerIndex].loanAmount = round2(amount);
                     workers[workerIndex].loanDate = new Date().toISOString();
+                    workers[workerIndex].updatedAt = new Date().toISOString();
                     saveData();
                     renderApp();
                     closeModal(loanModal);
@@ -603,27 +784,35 @@
 
             daysWorkedInput.addEventListener('input', () => {
                 const worker = workers.find(w => w.id == currentWorkerId);
-                const days = parseFloat(daysWorkedInput.value) || 0;
-                const grossPay = days * worker.dailySalary;
-                const netPay = grossPay - worker.loanAmount;
+                const days = Math.max(0, parseInt(daysWorkedInput.value || '0', 10));
+                const grossPay = round2(days * (worker?.dailySalary || 0));
+                const loanApplied = Math.min(grossPay, Number(worker?.loanAmount || 0));
+                const netPay = round2(grossPay - loanApplied);
+                const remainingLoan = round2(Math.max(0, Number(worker?.loanAmount || 0) - grossPay));
                 summaryGross.textContent = formatCurrency(grossPay);
+                summaryLoan.textContent = formatCurrency(worker?.loanAmount || 0);
                 summaryNet.textContent = formatCurrency(netPay);
-                currentPaymentData = { worker, days, grossPay, netPay };
+                // Mostrar restante de préstamo si aplica
+                summaryLoan.title = remainingLoan > 0 ? `Saldo de préstamo restante: ${formatCurrency(remainingLoan)}` : '';
+                currentPaymentData = { worker, days, grossPay, loanApplied, netPay, remainingLoan };
             });
 
             confirmSettleBtn.addEventListener('click', () => {
-                const { worker, days, netPay } = currentPaymentData;
+                const { worker, days, grossPay, loanApplied, netPay, remainingLoan } = currentPaymentData;
                 if (!worker || !days || days <= 0) {
                     alert('Por favor, ingrese un número de días trabajados válido.'); return;
                 }
                 paymentLog.push({
                     logId: Date.now(), workerId: worker.id, workerName: worker.name,
-                    paymentDate: new Date().toISOString(), daysWorked: days, netPay: netPay
+                    paymentDate: new Date().toISOString(), daysWorked: days,
+                    grossPay: round2(grossPay), loanApplied: round2(loanApplied), netPay: round2(netPay)
                 });
                 const workerIndex = workers.findIndex(w => w.id == worker.id);
-                workers[workerIndex].loanAmount = 0;
-                workers[workerIndex].loanDate = null;
-                workers[workerIndex].isActive = false;
+                workers[workerIndex].loanAmount = round2(remainingLoan);
+                workers[workerIndex].loanDate = remainingLoan > 0 ? new Date().toISOString() : null;
+                // Desactivar solo si ya no tiene préstamo pendiente
+                workers[workerIndex].isActive = remainingLoan > 0 ? true : false;
+                workers[workerIndex].updatedAt = new Date().toISOString();
                 saveData();
                 renderApp();
                 closeModal(settleModal);
@@ -634,6 +823,67 @@
                 if (event.target == loanModal) closeModal(loanModal);
                 if (event.target == settleModal) closeModal(settleModal);
             }
+
+            // --- Historial: filtros y exportación ---
+            function applyFiltersAndRender() {
+                renderApp();
+            }
+
+            if (filterNameInput) filterNameInput.addEventListener('input', applyFiltersAndRender);
+            if (filterFromInput) filterFromInput.addEventListener('change', applyFiltersAndRender);
+            if (filterToInput) filterToInput.addEventListener('change', applyFiltersAndRender);
+
+            if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
+                if (filterNameInput) filterNameInput.value = '';
+                if (filterFromInput) filterFromInput.value = '';
+                if (filterToInput) filterToInput.value = '';
+                applyFiltersAndRender();
+            });
+
+            function download(filename, content, mime = 'text/plain') {
+                const blob = new Blob([content], { type: mime });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            function getFilteredLogs() {
+                const name = (filterNameInput?.value || '').trim().toLowerCase();
+                const fromDate = filterFromInput?.value ? new Date(filterFromInput.value) : null;
+                const toDate = filterToInput?.value ? new Date(filterToInput.value) : null;
+                let logs = [...paymentLog];
+                if (name) logs = logs.filter(l => (l.workerName || '').toLowerCase().includes(name));
+                if (fromDate) logs = logs.filter(l => new Date(l.paymentDate) >= fromDate);
+                if (toDate) { const t = new Date(toDate); t.setHours(23,59,59,999); logs = logs.filter(l => new Date(l.paymentDate) <= t); }
+                logs.sort((a,b)=> new Date(b.paymentDate) - new Date(a.paymentDate));
+                return logs;
+            }
+
+            function toCSV(logs) {
+                const headers = ['logId','workerId','workerName','paymentDate','daysWorked','grossPay','loanApplied','netPay'];
+                const rows = logs.map(l => headers.map(h => {
+                    const v = l[h] !== undefined ? l[h] : '';
+                    const s = (typeof v === 'number') ? String(round2(v)) : String(v || '');
+                    return '"' + s.replace(/"/g, '""') + '"';
+                }).join(','));
+                return headers.join(',') + '\n' + rows.join('\n');
+            }
+
+            if (exportCsvBtn) exportCsvBtn.addEventListener('click', () => {
+                const logs = getFilteredLogs();
+                const csv = toCSV(logs);
+                download(`historial_pagos_${new Date().toISOString().slice(0,10)}.csv`, csv, 'text/csv');
+            });
+
+            if (exportJsonBtn) exportJsonBtn.addEventListener('click', () => {
+                const payload = { version: APP_VERSION, exportedAt: new Date().toISOString(), logs: getFilteredLogs() };
+                download(`historial_pagos_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(payload, null, 2), 'application/json');
+            });
 
             // --- Lógica PWA: Registro del Service Worker ---
             function registerServiceWorker() {
