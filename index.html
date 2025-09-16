@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Raya Simplificada</title>
+    <meta name="theme-color" content="#2a7de1"/>
+    <!-- Manifiesto PWA embebido para capacidad de instalación -->
+    <link rel="manifest" href='data:application/manifest+json,{
+        "name": "Gestión de Raya",
+        "short_name": "Raya",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#f0f4f8",
+        "theme_color": "#2a7de1",
+        "description": "Herramienta simple para gestionar pagos y préstamos de trabajadores.",
+        "icons": [
+            { "src": "https://placehold.co/192x192/2a7de1/ffffff?text=Raya", "sizes": "192x192", "type": "image/png" },
+            { "src": "https://placehold.co/512x512/2a7de1/ffffff?text=Raya", "sizes": "512x512", "type": "image/png" }
+        ]
+    }'>
+    <!-- CSS Embebido para Estilos -->
+    <style>
+        :root {
+            --primary-color: #2a7de1;
+            --secondary-color: #f0f4f8;
+            --text-color: #333;
+            --border-color: #dce1e6;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --white-color: #fff;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --info-color: #17a2b8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--white-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        main {
+            padding: 25px;
+        }
+
+        .card {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            width: 100%;
+        }
+
+        .worker-item, .log-item {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .worker-item:last-child, .log-item:last-child {
+            border-bottom: none;
+        }
+        
+        .worker-info, .log-info {
+            flex-grow: 1;
+        }
+
+        .worker-info span, .log-info span {
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .worker-info .loan-info {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+
+        .worker-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        /* Tab Styles */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab-link {
+            padding: 15px 20px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 1em;
+            font-weight: 600;
+            color: #888;
+            position: relative;
+            top: 2px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-link.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding-top: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-content .card {
+            margin-bottom: 0; /* Remove margin from cards inside tabs */
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+        
+        #settlement-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            border-radius: 6px;
+        }
+
+        #settlement-summary div {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        
+        #settlement-summary .total {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--success-color);
+        }
+
+        /* --- Estilos Responsivos para Móviles --- */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            main {
+                padding: 15px;
+            }
+
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .card h2 {
+                font-size: 1.2em;
+            }
+
+            /* Hace que los items de trabajador se apilen verticalmente */
+            .worker-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .worker-actions {
+                width: 100%;
+                margin-top: 15px;
+            }
+            
+            .worker-actions button {
+                flex-grow: 1; /* Hace que los botones compartan el espacio */
+            }
+
+            /* Ajusta las pestañas para pantallas pequeñas */
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-link {
+                padding: 12px 15px;
+                font-size: 0.9em;
+            }
+
+            /* Mejora la visualización de modales en móvil */
+            .modal-content {
+                width: 90%;
+                margin: 20px auto; /* Mejor para el desplazamiento en pantallas cortas */
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Gestión de Raya Simplificada</h1>
+        </header>
+
+        <main>
+            <!-- Sección para agregar trabajadores -->
+            <div class="card">
+                <h2>Registrar Nuevo Trabajador</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="worker-name">Nombre Completo</label>
+                        <input type="text" id="worker-name" placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="daily-salary">Sueldo por Día</label>
+                        <input type="number" id="daily-salary" placeholder="Ej: 250.00">
+                    </div>
+                    <div class="form-group">
+                        <button id="add-worker-btn" class="btn-primary">Registrar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenedor de Pestañas -->
+            <div class="tabs">
+                <button class="tab-link active" data-tab="tab-raya">Lista de Raya</button>
+                <button class="tab-link" data-tab="tab-registrados">Trabajadores</button>
+                <button class="tab-link" data-tab="tab-historial">Historial</button>
+            </div>
+
+            <div id="tab-raya" class="tab-content active">
+                <div class="card">
+                    <h2>Lista de Raya (Ciclo Actual)</h2>
+                    <div id="worker-list">
+                        <!-- Los trabajadores activos se insertarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-registrados" class="tab-content">
+                <div class="card">
+                    <h2>Trabajadores Registrados</h2>
+                    <div id="registered-worker-list">
+                        <!-- Los trabajadores inactivos se insertarán aquí -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-historial" class="tab-content">
+                <div class="card">
+                    <h2>Historial de Pagos</h2>
+                    <div id="payment-log-list">
+                        <!-- El registro de pagos se insertará aquí -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modales -->
+    <div id="loan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="loan-modal-title">Registrar Préstamo</h2>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="loan-amount">Monto del Préstamo</label>
+                <input type="number" id="loan-amount" placeholder="0.00">
+            </div>
+            <div class="worker-actions">
+                <button id="save-loan-btn" class="btn-primary" style="background-color: var(--success-color);">Guardar</button>
+                <button id="cancel-loan-btn" class="btn-primary" style="background-color: var(--danger-color);">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settle-modal" class="modal">
+        <div class="modal-content">
+             <div class="modal-header">
+                <h2 id="settle-modal-title">Liquidar Pago</h2>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="days-worked">Días Trabajados</label>
+                <input type="number" id="days-worked" placeholder="0">
+            </div>
+            <div id="settlement-summary">
+                <div><span>Sueldo Bruto:</span> <span id="summary-gross"></span></div>
+                <div><span>(-) Préstamo:</span> <span id="summary-loan" style="color: var(--danger-color); font-weight: bold;"></span></div>
+                <hr>
+                <div><span class="total">Total a Pagar:</span> <span class="total" id="summary-net"></span></div>
+            </div>
+             <div class="worker-actions" style="margin-top: 20px;">
+                <button id="confirm-settle-btn" class="btn-primary" style="background-color: var(--success-color);">Confirmar Pago</button>
+                <button id="cancel-settle-btn" class="btn-primary" style="background-color: var(--danger-color);">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos del DOM
+            const addWorkerBtn = document.getElementById('add-worker-btn');
+            const workerListDiv = document.getElementById('worker-list');
+            const registeredWorkerListDiv = document.getElementById('registered-worker-list');
+            const paymentLogListDiv = document.getElementById('payment-log-list');
+            const workerNameInput = document.getElementById('worker-name');
+            const dailySalaryInput = document.getElementById('daily-salary');
+
+            // Elementos de las Pestañas
+            const tabsContainer = document.querySelector('.tabs');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // Modales y sus elementos
+            const loanModal = document.getElementById('loan-modal');
+            const loanModalTitle = document.getElementById('loan-modal-title');
+            const loanAmountInput = document.getElementById('loan-amount');
+            const saveLoanBtn = document.getElementById('save-loan-btn');
+            const cancelLoanBtn = document.getElementById('cancel-loan-btn');
+
+            const settleModal = document.getElementById('settle-modal');
+            const settleModalTitle = document.getElementById('settle-modal-title');
+            const daysWorkedInput = document.getElementById('days-worked');
+            const summaryGross = document.getElementById('summary-gross');
+            const summaryLoan = document.getElementById('summary-loan');
+            const summaryNet = document.getElementById('summary-net');
+            const confirmSettleBtn = document.getElementById('confirm-settle-btn');
+            const cancelSettleBtn = document.getElementById('cancel-settle-btn');
+
+            let workers = [];
+            let paymentLog = [];
+            let currentWorkerId = null;
+            let currentPaymentData = {};
+
+            // --- Funciones de Datos y UI ---
+            function loadData() {
+                const storedWorkers = localStorage.getItem('simplePayrollWorkers');
+                workers = storedWorkers ? JSON.parse(storedWorkers) : [];
+                const storedLog = localStorage.getItem('simplePayrollLog');
+                paymentLog = storedLog ? JSON.parse(storedLog) : [];
+                renderApp();
+            }
+
+            function saveData() {
+                localStorage.setItem('simplePayrollWorkers', JSON.stringify(workers));
+                localStorage.setItem('simplePayrollLog', JSON.stringify(paymentLog));
+            }
+
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+            }
+
+            function renderApp() {
+                workerListDiv.innerHTML = '';
+                registeredWorkerListDiv.innerHTML = '';
+                paymentLogListDiv.innerHTML = '';
+
+                const activeWorkers = workers.filter(w => w.isActive);
+                const inactiveWorkers = workers.filter(w => !w.isActive);
+
+                if (activeWorkers.length === 0) {
+                    workerListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay trabajadores en el ciclo de pago actual.</p>';
+                } else {
+                    activeWorkers.forEach(worker => {
+                        const workerItem = document.createElement('div');
+                        workerItem.className = 'worker-item';
+                        const loanInfo = worker.loanAmount > 0
+                            ? `<span class="loan-info">Préstamo: ${formatCurrency(worker.loanAmount)} (${new Date(worker.loanDate).toLocaleDateString()})</span>`
+                            : '<span>Sin préstamo pendiente</span>';
+
+                        workerItem.innerHTML = `
+                            <div class="worker-info">
+                                <span><strong>${worker.name}</strong></span>
+                                <span>Sueldo Diario: ${formatCurrency(worker.dailySalary)}</span>
+                                ${loanInfo}
+                            </div>
+                            <div class="worker-actions">
+                                <button class="loan-btn" data-id="${worker.id}">Préstamo</button>
+                                <button class="settle-btn" data-id="${worker.id}">Liquidar</button>
+                            </div>`;
+                        workerListDiv.appendChild(workerItem);
+                    });
+                }
+                
+                if (inactiveWorkers.length === 0) {
+                     registeredWorkerListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay trabajadores inactivos.</p>';
+                } else {
+                    inactiveWorkers.forEach(worker => {
+                        const workerItem = document.createElement('div');
+                        workerItem.className = 'worker-item';
+                        workerItem.innerHTML = `
+                             <div class="worker-info">
+                                <span><strong>${worker.name}</strong></span>
+                                <span>Sueldo Diario: ${formatCurrency(worker.dailySalary)}</span>
+                            </div>
+                            <div class="worker-actions">
+                                <button class="activate-btn" data-id="${worker.id}" style="background-color: var(--info-color); color: white;">Activar</button>
+                            </div>`;
+                        registeredWorkerListDiv.appendChild(workerItem);
+                    });
+                }
+
+                if (paymentLog.length === 0) {
+                    paymentLogListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay pagos en el historial.</p>';
+                } else {
+                    paymentLog.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
+                    paymentLog.forEach(log => {
+                        const logItem = document.createElement('div');
+                        logItem.className = 'log-item';
+                        logItem.innerHTML = `
+                            <div class="log-info">
+                                <span><strong>${log.workerName}</strong></span>
+                                <span>Pagado el: ${new Date(log.paymentDate).toLocaleDateString()}</span>
+                            </div>
+                            <div class="log-amount" style="text-align: right;">
+                                <span style="color: var(--success-color); font-weight: bold;">${formatCurrency(log.netPay)}</span>
+                                <small>(${log.daysWorked} días)</small>
+                            </div>`;
+                        paymentLogListDiv.appendChild(logItem);
+                    });
+                }
+            }
+            
+            // --- Lógica de Modales ---
+            function openModal(modal) { modal.style.display = 'block'; }
+            function closeModal(modal) { modal.style.display = 'none'; }
+            
+            // --- Eventos ---
+            tabsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab-link')) {
+                    const targetTab = e.target.dataset.tab;
+                    tabsContainer.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
+                    e.target.classList.add('active');
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === targetTab) {
+                            content.classList.add('active');
+                        }
+                    });
+                }
+            });
+            
+            addWorkerBtn.addEventListener('click', () => {
+                const name = workerNameInput.value.trim();
+                const dailySalary = parseFloat(dailySalaryInput.value);
+                if (name && dailySalary > 0) {
+                    workers.push({
+                        id: Date.now(), name, dailySalary,
+                        loanAmount: 0, loanDate: null, isActive: false
+                    });
+                    saveData();
+                    renderApp();
+                    workerNameInput.value = '';
+                    dailySalaryInput.value = '';
+                } else {
+                    alert('Por favor, ingrese un nombre y un sueldo diario válidos.');
+                }
+            });
+
+            workerListDiv.addEventListener('click', (e) => {
+                const targetId = e.target.dataset.id;
+                if (!targetId) return;
+                currentWorkerId = targetId;
+                const worker = workers.find(w => w.id == currentWorkerId);
+                if (e.target.classList.contains('loan-btn')) {
+                    loanModalTitle.textContent = `Préstamo para ${worker.name}`;
+                    loanAmountInput.value = ''; openModal(loanModal);
+                }
+                if (e.target.classList.contains('settle-btn')) {
+                    settleModalTitle.textContent = `Liquidar a ${worker.name}`;
+                    daysWorkedInput.value = '';
+                    summaryGross.textContent = formatCurrency(0);
+                    summaryLoan.textContent = formatCurrency(worker.loanAmount);
+                    summaryNet.textContent = formatCurrency(-worker.loanAmount);
+                    openModal(settleModal);
+                }
+            });
+
+            registeredWorkerListDiv.addEventListener('click', (e) => {
+                if (e.target.classList.contains('activate-btn')) {
+                    const workerId = e.target.dataset.id;
+                    const workerIndex = workers.findIndex(w => w.id == workerId);
+                    workers[workerIndex].isActive = true;
+                    saveData();
+                    renderApp();
+                }
+            });
+            
+            saveLoanBtn.addEventListener('click', () => {
+                const amount = parseFloat(loanAmountInput.value);
+                if (amount > 0) {
+                    const workerIndex = workers.findIndex(w => w.id == currentWorkerId);
+                    workers[workerIndex].loanAmount = amount;
+                    workers[workerIndex].loanDate = new Date().toISOString();
+                    saveData();
+                    renderApp();
+                    closeModal(loanModal);
+                }
+            });
+            cancelLoanBtn.addEventListener('click', () => closeModal(loanModal));
+
+            daysWorkedInput.addEventListener('input', () => {
+                const worker = workers.find(w => w.id == currentWorkerId);
+                const days = parseFloat(daysWorkedInput.value) || 0;
+                const grossPay = days * worker.dailySalary;
+                const netPay = grossPay - worker.loanAmount;
+                summaryGross.textContent = formatCurrency(grossPay);
+                summaryNet.textContent = formatCurrency(netPay);
+                currentPaymentData = { worker, days, grossPay, netPay };
+            });
+
+            confirmSettleBtn.addEventListener('click', () => {
+                const { worker, days, netPay } = currentPaymentData;
+                if (!worker || !days || days <= 0) {
+                    alert('Por favor, ingrese un número de días trabajados válido.'); return;
+                }
+                paymentLog.push({
+                    logId: Date.now(), workerId: worker.id, workerName: worker.name,
+                    paymentDate: new Date().toISOString(), daysWorked: days, netPay: netPay
+                });
+                const workerIndex = workers.findIndex(w => w.id == worker.id);
+                workers[workerIndex].loanAmount = 0;
+                workers[workerIndex].loanDate = null;
+                workers[workerIndex].isActive = false;
+                saveData();
+                renderApp();
+                closeModal(settleModal);
+            });
+            cancelSettleBtn.addEventListener('click', () => closeModal(settleModal));
+
+            window.onclick = function(event) {
+                if (event.target == loanModal) closeModal(loanModal);
+                if (event.target == settleModal) closeModal(settleModal);
+            }
+
+            // --- Lógica PWA: Registro del Service Worker ---
+            function registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    // El contenido del Service Worker se crea dinámicamente
+                    const swContent = `
+                        const CACHE_NAME = 'gestion-raya-cache-v1';
+                        // Cacheamos el archivo principal al instalar.
+                        // Usamos una URL relativa para que funcione en cualquier ruta.
+                        const urlsToCache = [ '.' ];
+
+                        self.addEventListener('install', event => {
+                            event.waitUntil(
+                                caches.open(CACHE_NAME)
+                                    .then(cache => {
+                                        console.log('Cache abierto');
+                                        return cache.addAll(urlsToCache);
+                                    })
+                            );
+                        });
+
+                        // Estrategia: Cache-First. Intenta servir desde el caché primero.
+                        // Si no lo encuentra, va a la red.
+                        self.addEventListener('fetch', event => {
+                            event.respondWith(
+                                caches.match(event.request)
+                                    .then(response => {
+                                        return response || fetch(event.request);
+                                    })
+                            );
+                        });
+                    `;
+                    // Se crea un "archivo virtual" para el Service Worker
+                    const blob = new Blob([swContent], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+
+                    navigator.serviceWorker.register(swUrl)
+                        .then(registration => {
+                            console.log('ServiceWorker registrado con éxito:', registration);
+                        })
+                        .catch(error => {
+                            console.log('Fallo en el registro del ServiceWorker:', error);
+                        });
+                }
+            }
+
+            // --- Inicialización ---
+            loadData();
+            registerServiceWorker();
+
+        });
+    </script>
+</body>
+</html>
+
