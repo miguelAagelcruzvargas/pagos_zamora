@@ -42,24 +42,23 @@
         }
 
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: var(--white-color);
-            border-radius: 12px;
-            box-shadow: 0 4px 12px var(--shadow-color);
-            overflow: hidden;
+            width: 100%;
+            margin: 0;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            overflow: visible;
         }
 
         header {
             background-color: var(--primary-color);
             color: white;
-            padding: 20px;
-            text-align: center;
+            padding: 16px 20px;
         }
 
         header h1 {
             margin: 0;
-            font-size: 1.8em;
+            font-size: 1.6em;
         }
 
         main {
@@ -289,19 +288,10 @@
             --info-color: #06b6d4;
             --white-color: #ffffff;
             --shadow-color: rgba(15, 23, 42, 0.08);
-            --card-bg: #ffffff;
         }
 
-        body.dark {
-            --secondary-color: #0b1220;
-            --text-color: #e5e7eb;
-            --muted-text: #94a3b8;
-            --border-color: #1f2937;
-            --card-bg: #0f172a;
-            --shadow-color: rgba(0, 0, 0, 0.4);
-        }
-
-        .container { max-width: 980px; background-color: var(--card-bg); box-shadow: 0 8px 24px var(--shadow-color); }
+        /* Modo oscuro eliminado */
+        .container { max-width: 100%; background-color: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
         header { background: linear-gradient(135deg, var(--primary-color), #265fd5); text-align: unset; }
         .header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         header h1 { font-size: 1.6em; letter-spacing: .2px; }
@@ -384,7 +374,6 @@
         <header>
             <div class="header-bar">
                 <h1>Gestión de Raya Simplificada</h1>
-                <button id="theme-toggle" class="btn btn-light">Modo oscuro</button>
             </div>
         </header>
 
@@ -548,7 +537,6 @@
             const summaryNet = document.getElementById('summary-net');
             const confirmSettleBtn = document.getElementById('confirm-settle-btn');
             const cancelSettleBtn = document.getElementById('cancel-settle-btn');
-            const themeToggleBtn = document.getElementById('theme-toggle');
 
             // Filtros y exportaciones Historial
             const filterNameInput = document.getElementById('filter-name');
@@ -574,12 +562,7 @@
                 paymentLog = storedLog ? JSON.parse(storedLog) : [];
                 migrateStorage();
                 renderApp();
-                // Inicializar tema
-                const savedTheme = localStorage.getItem('simplePayrollTheme');
-                if (savedTheme === 'dark') {
-                    document.body.classList.add('dark');
-                    if (themeToggleBtn) themeToggleBtn.textContent = 'Modo claro';
-                }
+                // Modo oscuro eliminado
             }
 
             function saveData() {
@@ -905,14 +888,7 @@
                 if (event.target == settleModal) closeModal(settleModal);
             }
 
-            // Toggle Tema oscuro/claro
-            if (themeToggleBtn) {
-                themeToggleBtn.addEventListener('click', () => {
-                    const nowDark = document.body.classList.toggle('dark');
-                    localStorage.setItem('simplePayrollTheme', nowDark ? 'dark' : 'light');
-                    themeToggleBtn.textContent = nowDark ? 'Modo claro' : 'Modo oscuro';
-                });
-            }
+            // Modo oscuro eliminado
 
             // --- Historial: filtros y exportación ---
             function applyFiltersAndRender() {
