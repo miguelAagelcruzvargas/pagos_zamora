@@ -318,6 +318,12 @@
         .tab-link:hover { background: rgba(31,111,235,0.06); color: var(--text-color); }
         .tab-link.active { color: #fff; background: var(--primary-color); border-color: var(--primary-color); }
 
+    /* Barra de semana */
+    .week-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 12px; }
+    .week-bar .range { font-weight: 700; color: var(--text-color); }
+    .week-bar .wk-btn { padding: 6px 10px; border: 1px solid var(--border-color); background: #fff; border-radius: 8px; cursor: pointer; }
+    .week-bar .wk-btn:hover { background: #f3f4f6; }
+
     /* Asistencia semanal (compacta en una sola fila) */
     .attendance { margin-top: 10px; }
     .attendance h4 { margin: 10px 0 6px; font-size: 0.92em; color: var(--text-color); }
@@ -427,6 +433,11 @@
             <div id="tab-raya" class="tab-content active">
                 <div class="card">
                     <h2>Lista de Raya (Ciclo Actual)</h2>
+                    <div class="week-bar">
+                        <button id="prev-week" class="wk-btn" title="Semana anterior">◀</button>
+                        <div class="range" id="week-range">Semana actual</div>
+                        <button id="next-week" class="wk-btn" title="Semana siguiente">▶</button>
+                    </div>
                     <div id="worker-list">
                         <!-- Los trabajadores activos se insertarán aquí -->
                     </div>
@@ -562,6 +573,10 @@
             const exportCsvBtn = document.getElementById('export-csv');
             const summaryCountSpan = document.getElementById('summary-count');
             const summaryTotalSpan = document.getElementById('summary-total');
+            // Controles de semana
+            const prevWeekBtn = document.getElementById('prev-week');
+            const nextWeekBtn = document.getElementById('next-week');
+            const weekRangeEl = document.getElementById('week-range');
 
             let workers = [];
             let paymentLog = [];
@@ -569,6 +584,7 @@
             let currentPaymentData = {};
 
             const APP_VERSION = '1.1.0';
+            let currentWeekStart = null; // inicio de semana visible
 
             // --- Funciones de Datos y UI ---
             function loadData() {
@@ -634,10 +650,22 @@
                 return Array.from({length:7}, (_,i)=> { const d=new Date(start); d.setDate(start.getDate()+i); return d; });
             }
             function ymd(d){ return d.toISOString().slice(0,10); }
-            function calcAttendanceDays(att={}) {
+            function calcAttendanceDays(att={}, weekDates=null) {
                 let full=0, half=0;
-                Object.values(att||{}).forEach(v=>{ if(v==='full') full++; else if(v==='half') half++; });
+                if (weekDates && weekDates.length) {
+                    for (const d of weekDates) {
+                        const v=(att||{})[ymd(d)];
+                        if (v==='full') full++; else if (v==='half') half++;
+                    }
+                } else {
+                    Object.values(att||{}).forEach(v=>{ if(v==='full') full++; else if(v==='half') half++; });
+                }
                 return { full, half, days: round2(full + half*0.5) };
+            }
+            function formatWeekRange(dates) {
+                if (!dates || !dates.length) return '';
+                const fmt = opts => dates[0].toLocaleDateString('es-MX', opts) + ' - ' + dates[6].toLocaleDateString('es-MX', opts);
+                return fmt({ day:'numeric', month:'short' });
             }
 
             function renderApp() {
@@ -647,6 +675,10 @@
 
                 const activeWorkers = workers.filter(w => w.isActive);
                 const inactiveWorkers = workers.filter(w => !w.isActive);
+
+                // Semana visible
+                const weekDates = getWeekDates(currentWeekStart || new Date());
+                if (weekRangeEl) weekRangeEl.textContent = formatWeekRange(weekDates);
 
                 if (activeWorkers.length === 0) {
                     workerListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay trabajadores en el ciclo de pago actual.</p>';
@@ -659,7 +691,7 @@
                             : '<span>Sin préstamo pendiente</span>';
 
                         // Asistencia de la semana actual
-                        const weekDates = getWeekDates();
+                        // usar la semana visible
                         const headerDays = weekDates.map((d,i)=>`<div class="day">${DAY_NAMES[i]}<span class="num">${d.getDate()}</span></div>`).join('');
                         const row = weekDates.map(d=>{
                             const k=ymd(d);
@@ -850,8 +882,9 @@
                 }
                 if (e.target.classList.contains('settle-btn')) {
                     settleModalTitle.textContent = `Liquidar a ${worker.name}`;
-                    // calcular días desde asistencia
-                    const daysCalc = calcAttendanceDays(worker.attendance);
+                    // calcular días de la semana visible
+                    const weekDates = getWeekDates(currentWeekStart || new Date());
+                    const daysCalc = calcAttendanceDays(worker.attendance, weekDates);
                     daysWorkedInput.value = daysCalc.days;
                     daysWorkedInput.readOnly = true;
                     const grossPay = round2(daysCalc.days * (worker?.dailySalary || 0));
@@ -862,7 +895,7 @@
                     summaryLoan.textContent = formatCurrency(worker?.loanAmount || 0);
                     summaryNet.textContent = formatCurrency(netPay);
                     summaryLoan.title = remainingLoan > 0 ? `Saldo de préstamo restante: ${formatCurrency(remainingLoan)}` : '';
-                    currentPaymentData = { worker, days: daysCalc.days, grossPay, loanApplied, netPay, remainingLoan };
+                    currentPaymentData = { worker, days: daysCalc.days, grossPay, loanApplied, netPay, remainingLoan, weekDates };
                     openModal(settleModal);
                 }
             });
@@ -931,7 +964,7 @@
             // La liquidación se calcula automáticamente desde asistencia; no requerimos input manual
 
             confirmSettleBtn.addEventListener('click', () => {
-                const { worker, days, grossPay, loanApplied, netPay, remainingLoan } = currentPaymentData;
+                const { worker, days, grossPay, loanApplied, netPay, remainingLoan, weekDates } = currentPaymentData;
                 if (!worker) { alert('Error: trabajador no encontrado.'); return; }
                 paymentLog.push({
                     logId: Date.now(), workerId: worker.id, workerName: worker.name,
@@ -943,7 +976,10 @@
                 workers[workerIndex].loanDate = remainingLoan > 0 ? new Date().toISOString() : null;
                 // Reiniciar ciclo: si queda préstamo, continúa activo; si no, se desactiva
                 workers[workerIndex].isActive = remainingLoan > 0 ? true : false;
-                workers[workerIndex].attendance = {}; // limpiar asistencia del ciclo
+                // Limpiar sólo la asistencia de la semana liquidada
+                if (Array.isArray(weekDates)) {
+                    for (const d of weekDates) delete workers[workerIndex].attendance[ymd(d)];
+                }
                 workers[workerIndex].currentCycleStart = workers[workerIndex].isActive ? new Date().toISOString() : null;
                 workers[workerIndex].updatedAt = new Date().toISOString();
                 saveData();
@@ -1062,7 +1098,12 @@
                 }
             }
 
+            // Controles de semana
+            if (prevWeekBtn) prevWeekBtn.addEventListener('click', ()=> { currentWeekStart = startOfWeek((currentWeekStart||new Date())); currentWeekStart.setDate(currentWeekStart.getDate()-7); renderApp(); });
+            if (nextWeekBtn) nextWeekBtn.addEventListener('click', ()=> { currentWeekStart = startOfWeek((currentWeekStart||new Date())); currentWeekStart.setDate(currentWeekStart.getDate()+7); renderApp(); });
+
             // --- Inicialización ---
+            currentWeekStart = startOfWeek(new Date());
             loadData();
             registerServiceWorker();
 
