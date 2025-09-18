@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestion-raya-cache-v2';
+const CACHE_NAME = 'gestion-raya-cache-v3';
 const PRECACHE_URLS = [
   './',
   'index.html',
@@ -9,6 +9,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -17,6 +18,7 @@ self.addEventListener('activate', (event) => {
       keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
     ))
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
