@@ -331,12 +331,20 @@
     .week-header .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
     .week-header .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
 
-    .attendance-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 6px; }
-    .att-dot { height: 30px; border-radius: 999px; border: 1px solid var(--border-color); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
-    .att-dot.empty { color: #9ca3af; }
-    .att-dot.full { background:#10b9811a; color:#065f46; border-color: #34d399; }
-    .att-dot.half { background:#f59e0b1a; color:#92400e; border-color: #fbbf24; }
-    .att-dot.absent { background:#ef44441a; color:#7f1d1d; border-color: #fca5a5; }
+    /* Diseño por columna con 3 botones (como el ejemplo) */
+    .att-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+    .att-col { text-align: center; }
+    .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
+    .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
+    .attendance-btn-group { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .att-btn { border: none; border-radius: 999px; font-weight: 800; font-size: 12px; padding: 6px 0; cursor: pointer; transition: filter .15s ease, transform .05s ease; }
+    .att-btn:active { transform: translateY(-1px); }
+    .att-btn.full { background:#d1fae5; color:#065f46; }
+    .att-btn.full.is-active { background:#10b981; color:#fff; }
+    .att-btn.half { background:#fef9c3; color:#92400e; }
+    .att-btn.half.is-active { background:#f59e0b; color:#fff; }
+    .att-btn.absent { background:#fecaca; color:#7f1d1d; }
+    .att-btn.absent.is-active { background:#ef4444; color:#fff; }
     .attendance-legend { display: flex; gap: 10px; align-items: center; margin-top: 6px; color: #6b7280; font-size: 12px; }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
     .legend-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
@@ -692,19 +700,27 @@
 
                         // Asistencia de la semana actual
                         // usar la semana visible
-                        const headerDays = weekDates.map((d,i)=>`<div class="day">${DAY_NAMES[i]}<span class="num">${d.getDate()}</span></div>`).join('');
-                        const row = weekDates.map(d=>{
-                            const k=ymd(d);
-                            const cur=(worker.attendance||{})[k]||'empty';
-                            const label = cur==='full' ? '✓' : cur==='half' ? '½' : cur==='absent' ? 'X' : '';
-                            return `<button class="att-dot ${cur}" title="Clic para cambiar" data-worker-id="${worker.id}" data-date="${k}">${label}</button>`;
+                        const cols = weekDates.map((d,i)=>{
+                            const k = ymd(d);
+                            const cur = (worker.attendance||{})[k] || 'empty';
+                            const fActive = cur==='full' ? 'is-active' : '';
+                            const hActive = cur==='half' ? 'is-active' : '';
+                            const aActive = cur==='absent' ? 'is-active' : '';
+                            return `
+                                <div class="att-col">
+                                    <div class="day">${DAY_NAMES[i]}<span class="num">${d.getDate()}</span></div>
+                                    <div class="attendance-btn-group">
+                                        <button class="att-btn full ${fActive}" data-worker-id="${worker.id}" data-date="${k}" data-status="full">✓</button>
+                                        <button class="att-btn half ${hActive}" data-worker-id="${worker.id}" data-date="${k}" data-status="half">½</button>
+                                        <button class="att-btn absent ${aActive}" data-worker-id="${worker.id}" data-date="${k}" data-status="absent">X</button>
+                                    </div>
+                                </div>`;
                         }).join('');
 
                         const attendanceHtml = `
                             <div class="attendance">
                                 <h4>Asistencia de la semana:</h4>
-                                <div class="week-header">${headerDays}</div>
-                                <div class="attendance-row">${row}</div>
+                                <div class="att-grid">${cols}</div>
                                 <div class="attendance-legend">
                                     <span class="legend-item"><span class="legend-swatch sw-full"></span> ✓ Completo</span>
                                     <span class="legend-item"><span class="legend-swatch sw-half"></span> ½ Medio</span>
@@ -855,16 +871,16 @@
 
             workerListDiv.addEventListener('click', (e) => {
                 const targetId = e.target.dataset.id;
-                // Manejo de asistencia (un solo botón por día que cicla estados)
-                if (e.target.classList.contains('att-dot')) {
+                // Manejo de asistencia (botones por estado)
+                if (e.target.classList.contains('att-btn')) {
                     const wid = e.target.dataset.workerId;
                     const dateKey = e.target.dataset.date;
+                    const status = e.target.dataset.status; // full | half | absent
                     const widx = workers.findIndex(w=> w.id == wid);
                     if (widx >= 0) {
                         workers[widx].attendance = workers[widx].attendance || {};
-                        const order = ['empty','full','half','absent'];
                         const cur = workers[widx].attendance[dateKey] || 'empty';
-                        const next = order[(order.indexOf(cur)+1) % order.length];
+                        const next = cur === status ? 'empty' : status; // volver a vacío si se repite
                         if (next === 'empty') delete workers[widx].attendance[dateKey]; else workers[widx].attendance[dateKey] = next;
                         workers[widx].updatedAt = new Date().toISOString();
                         saveData();
