@@ -428,6 +428,7 @@
                             <div class="actions">
                                 <button id="clear-filters" class="btn-secondary">Limpiar</button>
                                 <button id="export-csv" class="btn-info">Exportar CSV</button>
+                                <button id="delete-all-log" class="btn-danger">Borrar historial</button>
                             </div>
                         </div>
                     </div>
@@ -733,7 +734,7 @@
                     table.className = 'table';
                     table.innerHTML = `
                         <thead><tr>
-                            <th>Trabajador</th><th>Fecha</th><th>Días</th><th>Bruto</th><th>Préstamo</th><th>Pagado</th>
+                            <th>Trabajador</th><th>Fecha</th><th>Días</th><th>Bruto</th><th>Préstamo</th><th>Pagado</th><th>Acciones</th>
                         </tr></thead><tbody></tbody>`;
                     const tbody = table.querySelector('tbody');
                     filteredLog.forEach(log => {
@@ -745,6 +746,7 @@
                             <td>${formatCurrency(log.grossPay)}</td>
                             <td>${formatCurrency(log.loanApplied)}</td>
                             <td><strong style="color: var(--success-color);">${formatCurrency(log.netPay)}</strong></td>
+                            <td><button class="btn-danger btn-delete-log" data-log-id="${log.logId}">Eliminar</button></td>
                         `;
                         tbody.appendChild(tr);
                     });
@@ -995,6 +997,32 @@
                 a.download = `historial_pagos_${new Date().toISOString().slice(0,10)}.csv`;
                 a.click();
                 URL.revokeObjectURL(url);
+            });
+
+            // Eliminar historial completo
+            const deleteAllBtn = document.getElementById('delete-all-log');
+            if (deleteAllBtn) {
+                deleteAllBtn.addEventListener('click', () => {
+                    if (!paymentLog.length) return;
+                    if (confirm('¿Borrar TODO el historial de pagos? Esta acción no se puede deshacer.')) {
+                        paymentLog = [];
+                        saveData();
+                        renderPaymentLog();
+                    }
+                });
+            }
+
+            // Eliminar pago individual
+            paymentLogListDiv.addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-delete-log');
+                if (!btn) return;
+                const logId = btn.dataset.logId;
+                const idx = paymentLog.findIndex(l => String(l.logId) === String(logId));
+                if (idx >= 0 && confirm('¿Eliminar este registro de pago?')) {
+                    paymentLog.splice(idx, 1);
+                    saveData();
+                    renderPaymentLog();
+                }
             });
             
             // PWA
