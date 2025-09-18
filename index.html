@@ -319,6 +319,17 @@
         .table th { color: var(--muted-text); font-weight: 700; font-size: 0.9em; }
         .table tbody tr:hover { background: rgba(31,111,235,0.05); }
 
+        /* Encabezado de tarjeta con acciones */
+        .card-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 12px;
+        }
+
         /* Estilos Responsivos */
         @media (max-width: 600px) {
             body { padding: 0; }
@@ -410,7 +421,10 @@
 
             <div id="tab-historial" class="tab-content">
                 <div class="card">
-                    <h2>Historial de Pagos</h2>
+                    <div class="card-title-row">
+                        <h2 style="margin:0">Historial de Pagos</h2>
+                        <button id="delete-all-log" class="btn-danger" title="Borrar todo el historial de pagos">Borrar historial</button>
+                    </div>
                     <div class="form-grid" style="margin-bottom: 10px;">
                         <div class="form-group">
                             <label for="filter-name">Filtrar por nombre</label>
@@ -428,7 +442,6 @@
                             <div class="actions">
                                 <button id="clear-filters" class="btn-secondary">Limpiar</button>
                                 <button id="export-csv" class="btn-info">Exportar CSV</button>
-                                <button id="delete-all-log" class="btn-danger">Borrar historial</button>
                             </div>
                         </div>
                     </div>
