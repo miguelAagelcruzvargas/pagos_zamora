@@ -318,10 +318,10 @@
         .tab-link:hover { background: rgba(31,111,235,0.06); color: var(--text-color); }
         .tab-link.active { color: #fff; background: var(--primary-color); border-color: var(--primary-color); }
 
-    /* Barra de semana */
-    .week-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 12px; }
-    .week-bar .range { font-weight: 700; color: var(--text-color); }
-    .week-bar .wk-btn { padding: 6px 10px; border: 1px solid var(--border-color); background: #fff; border-radius: 8px; cursor: pointer; }
+    /* Barra de semana (más compacta y circular) */
+    .week-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 10px; }
+    .week-bar .range { font-weight: 700; color: var(--text-color); font-size: 0.95rem; }
+    .week-bar .wk-btn { width: 32px; height: 32px; padding: 0; display: inline-grid; place-items: center; border: 1px solid var(--border-color); background: #fff; border-radius: 999px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
     .week-bar .wk-btn:hover { background: #f3f4f6; }
 
     /* Asistencia semanal (compacta en una sola fila) */
@@ -331,21 +331,27 @@
     .week-header .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
     .week-header .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
 
-    /* Diseño por columna con 3 botones (como el ejemplo) */
-    .att-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+    /* Diseño por columna con 3 botones (compacto y bonito) */
+    .att-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .attendance.compact .att-grid { gap: 6px; }
     .att-col { text-align: center; }
     .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
-    .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
-    .attendance-btn-group { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
-    .att-btn { border: none; border-radius: 999px; font-weight: 800; font-size: 12px; padding: 6px 0; cursor: pointer; transition: filter .15s ease, transform .05s ease; }
+    .attendance.compact .day { font-size: 9px; }
+    .day .num { display: block; margin-top: 1px; color: #111827; font-weight: 700; font-size: 11px; }
+    .attendance.compact .day .num { font-size: 10px; }
+    .attendance-btn-group { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
+    .attendance.compact .attendance-btn-group { gap: 4px; margin-top: 4px; }
+    .att-btn { border: none; border-radius: 999px; font-weight: 800; font-size: 12px; padding: 6px 0; cursor: pointer; transition: box-shadow .15s ease, transform .05s ease, filter .15s ease; }
+    .attendance.compact .att-btn { font-size: 11px; padding: 5px 0; }
     .att-btn:active { transform: translateY(-1px); }
     .att-btn.full { background:#d1fae5; color:#065f46; }
-    .att-btn.full.is-active { background:#10b981; color:#fff; }
+    .att-btn.full.is-active { background:#10b981; color:#fff; box-shadow: 0 0 0 2px rgba(16,185,129,0.25) inset; }
     .att-btn.half { background:#fef9c3; color:#92400e; }
-    .att-btn.half.is-active { background:#f59e0b; color:#fff; }
+    .att-btn.half.is-active { background:#f59e0b; color:#fff; box-shadow: 0 0 0 2px rgba(245,158,11,0.25) inset; }
     .att-btn.absent { background:#fecaca; color:#7f1d1d; }
-    .att-btn.absent.is-active { background:#ef4444; color:#fff; }
-    .attendance-legend { display: flex; gap: 10px; align-items: center; margin-top: 6px; color: #6b7280; font-size: 12px; }
+    .att-btn.absent.is-active { background:#ef4444; color:#fff; box-shadow: 0 0 0 2px rgba(239,68,68,0.25) inset; }
+    .attendance-legend { display: flex; gap: 10px; align-items: center; margin-top: 6px; color: #6b7280; font-size: 11px; opacity: 0.9; }
+    .attendance.compact .attendance-legend { font-size: 10px; gap: 8px; }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
     .legend-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
     .sw-full { background:#34d399; }
@@ -718,7 +724,7 @@
                         }).join('');
 
                         const attendanceHtml = `
-                            <div class="attendance">
+                            <div class="attendance compact">
                                 <h4>Asistencia de la semana:</h4>
                                 <div class="att-grid">${cols}</div>
                                 <div class="attendance-legend">
