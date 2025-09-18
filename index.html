@@ -22,15 +22,16 @@
     <!-- CSS Embebido para Estilos -->
     <style>
         :root {
-            --primary-color: #2a7de1;
-            --secondary-color: #f0f4f8;
-            --text-color: #333;
-            --border-color: #dce1e6;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --white-color: #fff;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --info-color: #17a2b8;
+            --primary-color: #1f6feb;
+            --secondary-color: #f6f8fa;
+            --text-color: #1f2937;
+            --muted-text: #6b7280;
+            --border-color: #e5e7eb;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            --white-color: #ffffff;
+            --shadow-color: rgba(15, 23, 42, 0.08);
         }
 
         body {
@@ -38,7 +39,7 @@
             background-color: var(--secondary-color);
             color: var(--text-color);
             margin: 0;
-            padding: 0; /* quitar márgenes laterales grandes */
+            padding: 0;
         }
 
         .container {
@@ -53,17 +54,20 @@
         header {
             background-color: var(--primary-color);
             color: white;
-            padding: 12px 16px; /* más compacto */
-            border-bottom: 1px solid rgba(0,0,0,0.06); /* sutil divisor */
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
         }
 
         header h1 {
             margin: 0;
             font-size: 1.6em;
         }
+        
+        .header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        header h1 { font-size: 1.45em; letter-spacing: .2px; margin: 0; }
 
         main {
-            padding: 12px 16px; /* reducir padding general */
+            padding: 12px 16px;
         }
 
         .card {
@@ -71,7 +75,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 16px;
-            margin: 12px 0 16px; /* menos espacios verticales */
+            margin: 12px 0 16px;
         }
 
         .card h2 {
@@ -85,7 +89,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
-            align-items: start; /* alinea todos arriba para evitar saltos visuales */
+            align-items: start;
         }
 
         .form-group {
@@ -101,7 +105,15 @@
         .form-group input {
             padding: 10px;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-color);
+        }
+        
+        .form-group input:focus { 
+            outline: none; 
+            border-color: var(--primary-color); 
+            box-shadow: 0 0 0 4px rgba(31,111,235,0.15); 
         }
 
         .form-group input[type="checkbox"] {
@@ -116,15 +128,10 @@
             .form-group.button-group { align-self: stretch; }
         }
 
-        .hint {
-            color: #6c757d;
-            font-size: 0.85em;
-        }
-
         button {
             padding: 10px 15px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             transition: background-color 0.2s, transform 0.1s;
@@ -133,14 +140,16 @@
         button:active {
             transform: scale(0.98);
         }
+        
+        .btn-primary { background-color: var(--primary-color); color: #fff; }
+        .form-grid .btn-primary { width: 100%; }
+        .btn-secondary { background-color: #64748b; color: #fff; }
+        .btn-success { background-color: var(--success-color); color: #fff; }
+        .btn-danger { background-color: var(--danger-color); color: #fff; }
+        .btn-info { background-color: var(--info-color); color: #fff; }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-            width: 100%;
-        }
 
-        .worker-item, .log-item {
+        .worker-item {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
@@ -149,15 +158,15 @@
             border-bottom: 1px solid var(--border-color);
         }
         
-        .worker-item:last-child, .log-item:last-child {
+        .worker-item:last-child {
             border-bottom: none;
         }
         
-        .worker-info, .log-info {
+        .worker-info {
             flex-grow: 1;
         }
 
-        .worker-info span, .log-info span {
+        .worker-info span {
             display: block;
             margin-bottom: 4px;
         }
@@ -174,32 +183,38 @@
         }
         
         /* Tab Styles */
-        .tabs {
+        .tabs { 
             display: flex;
-            border-bottom: 2px solid var(--border-color);
+            gap: 8px; 
+            background: rgba(31,111,235,0.06); 
+            padding: 8px; 
+            border-radius: 10px; 
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
         }
 
-        .tab-link {
-            padding: 15px 20px;
-            cursor: pointer;
-            border: none;
-            background-color: transparent;
-            font-size: 1em;
-            font-weight: 600;
-            color: #888;
-            position: relative;
-            top: 2px;
-            border-bottom: 2px solid transparent;
+        .tab-link { 
+            padding: 10px 14px; 
+            border: 1px solid transparent; 
+            color: var(--muted-text); 
+            border-radius: 999px; 
+            background: transparent;
         }
 
-        .tab-link.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
+        .tab-link:hover { 
+            background: rgba(31,111,235,0.06); 
+            color: var(--text-color); 
         }
+
+        .tab-link.active { 
+            color: #fff; 
+            background: var(--primary-color); 
+            border-color: var(--primary-color); 
+        }
+
 
         .tab-content {
             display: none;
-            padding-top: 25px;
         }
 
         .tab-content.active {
@@ -207,23 +222,13 @@
         }
 
         .tab-content .card {
-            margin-bottom: 0; /* Remove margin from cards inside tabs */
+            margin-bottom: 0;
+            margin-top: 0;
         }
 
-        .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .btn-secondary { background-color: #6c757d; color: #fff; }
-        .btn-success { background-color: var(--success-color); color: #fff; }
-        .btn-danger { background-color: var(--danger-color); color: #fff; }
-        .btn-info { background-color: var(--info-color); color: #fff; }
-        
         /* Modal Styles */
         .modal {
-            display: none; /* se cambiará a flex desde JS */
+            display: none; 
             position: fixed;
             z-index: 1000;
             inset: 0;
@@ -233,6 +238,12 @@
             align-items: center;
             justify-content: center;
             padding: 16px;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        
+        .modal.visible {
+            opacity: 1;
         }
 
         .modal-content {
@@ -246,6 +257,12 @@
             border-radius: 12px;
             box-shadow: 0 12px 24px rgba(0,0,0,0.25);
             margin: 0;
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+        }
+        
+        .modal.visible .modal-content {
+            transform: scale(1);
         }
         
         .modal-header {
@@ -276,87 +293,36 @@
             font-size: 1.2em;
             color: var(--success-color);
         }
+        
+        /* Barra de semana */
+        .week-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0 12px; }
+        .week-bar .range { font-weight: 700; color: var(--text-color); }
+        .week-bar .wk-btn { padding: 6px 10px; border: 1px solid var(--border-color); background: #fff; border-radius: 8px; cursor: pointer; }
+        .week-bar .wk-btn:hover { background: #f3f4f6; }
 
-        /* --- Overrides modernos y modo oscuro --- */
-        :root {
-            --primary-color: #1f6feb;
-            --secondary-color: #f6f8fa;
-            --text-color: #1f2937;
-            --muted-text: #6b7280;
-            --border-color: #e5e7eb;
-            --success-color: #22c55e;
-            --danger-color: #ef4444;
-            --info-color: #06b6d4;
-            --white-color: #ffffff;
-            --shadow-color: rgba(15, 23, 42, 0.08);
-        }
+        /* Asistencia semanal */
+        .attendance { margin-top: 10px; }
+        .attendance h4 { margin: 10px 0 6px; font-size: 0.92em; color: var(--text-color); }
 
-    /* Modo oscuro eliminado */
-    .container { max-width: 100%; background-color: transparent; box-shadow: none; border-radius: 0; overflow: visible; }
-    header { background: var(--primary-color); text-align: unset; } /* quitar degradado que se ve "improlijo" */
-        .header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    header h1 { font-size: 1.45em; letter-spacing: .2px; margin: 0; }
-
-        .form-group input { border-radius: 8px; background: transparent; color: var(--text-color); }
-        .form-group input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(31,111,235,0.15); }
-
-        /* Botones modernos */
-        .btn, button { border-radius: 8px; }
-        .btn { background: #e5e7eb; color: #111827; }
-        .btn:hover { filter: brightness(0.98); }
-        .btn-primary { background-color: var(--primary-color); color: #fff; width: auto; }
-        .form-grid .btn-primary { width: 100%; }
-        .btn-secondary { background-color: #64748b; color: #fff; }
-        .btn-success { background-color: var(--success-color); color: #fff; }
-        .btn-danger { background-color: var(--danger-color); color: #fff; }
-        .btn-info { background-color: var(--info-color); color: #fff; }
-        .btn-light { background: rgba(255,255,255,0.9); color: #111827; }
-
-        /* Pestañas estilo píldora */
-        .tabs { gap: 8px; background: rgba(31,111,235,0.06); padding: 8px; border-radius: 10px; border: 1px solid var(--border-color); }
-        .tab-link { padding: 10px 14px; border: 1px solid transparent; color: var(--muted-text); border-radius: 999px; }
-        .tab-link:hover { background: rgba(31,111,235,0.06); color: var(--text-color); }
-        .tab-link.active { color: #fff; background: var(--primary-color); border-color: var(--primary-color); }
-
-    /* Barra de semana (más compacta y circular) */
-    .week-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 10px; }
-    .week-bar .range { font-weight: 700; color: var(--text-color); font-size: 0.95rem; }
-    .week-bar .wk-btn { width: 32px; height: 32px; padding: 0; display: inline-grid; place-items: center; border: 1px solid var(--border-color); background: #fff; border-radius: 999px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
-    .week-bar .wk-btn:hover { background: #f3f4f6; }
-
-    /* Asistencia semanal (compacta en una sola fila) */
-    .attendance { margin-top: 10px; }
-    .attendance h4 { margin: 10px 0 6px; font-size: 0.92em; color: var(--text-color); }
-    .week-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .week-header .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
-    .week-header .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
-
-    /* Diseño por columna con 3 botones (compacto y bonito) */
-    .att-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-    .attendance.compact .att-grid { gap: 6px; }
-    .att-col { text-align: center; }
-    .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
-    .attendance.compact .day { font-size: 9px; }
-    .day .num { display: block; margin-top: 1px; color: #111827; font-weight: 700; font-size: 11px; }
-    .attendance.compact .day .num { font-size: 10px; }
-    .attendance-btn-group { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
-    .attendance.compact .attendance-btn-group { gap: 4px; margin-top: 4px; }
-    .att-btn { border: none; border-radius: 999px; font-weight: 800; font-size: 12px; padding: 6px 0; cursor: pointer; transition: box-shadow .15s ease, transform .05s ease, filter .15s ease; }
-    .attendance.compact .att-btn { font-size: 11px; padding: 5px 0; }
-    .att-btn:active { transform: translateY(-1px); }
-    .att-btn.full { background:#d1fae5; color:#065f46; }
-    .att-btn.full.is-active { background:#10b981; color:#fff; box-shadow: 0 0 0 2px rgba(16,185,129,0.25) inset; }
-    .att-btn.half { background:#fef9c3; color:#92400e; }
-    .att-btn.half.is-active { background:#f59e0b; color:#fff; box-shadow: 0 0 0 2px rgba(245,158,11,0.25) inset; }
-    .att-btn.absent { background:#fecaca; color:#7f1d1d; }
-    .att-btn.absent.is-active { background:#ef4444; color:#fff; box-shadow: 0 0 0 2px rgba(239,68,68,0.25) inset; }
-    .attendance-legend { display: flex; gap: 10px; align-items: center; margin-top: 6px; color: #6b7280; font-size: 11px; opacity: 0.9; }
-    .attendance.compact .attendance-legend { font-size: 10px; gap: 8px; }
-    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-    .legend-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-    .sw-full { background:#34d399; }
-    .sw-half { background:#fbbf24; }
-    .sw-absent { background:#f87171; }
+        .att-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        .att-col { text-align: center; }
+        .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
+        .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
+        .attendance-btn-group { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+        .att-btn { border: none; border-radius: 999px; font-weight: 800; font-size: 12px; padding: 6px 0; cursor: pointer; transition: filter .15s ease, transform .05s ease; }
+        .att-btn:active { transform: translateY(-1px); }
+        .att-btn.full { background:#d1fae5; color:#065f46; }
+        .att-btn.full.is-active { background:#10b981; color:#fff; }
+        .att-btn.half { background:#fef9c3; color:#92400e; }
+        .att-btn.half.is-active { background:#f59e0b; color:#fff; }
+        .att-btn.absent { background:#fecaca; color:#7f1d1d; }
+        .att-btn.absent.is-active { background:#ef4444; color:#fff; }
+        .attendance-legend { display: flex; gap: 10px; align-items: center; margin-top: 6px; color: #6b7280; font-size: 12px; }
+        .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+        .legend-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .sw-full { background:#34d399; }
+        .sw-half { background:#fbbf24; }
+        .sw-absent { background:#f87171; }
 
         /* Tabla de historial */
         #payment-log-list { overflow-x: auto; }
@@ -365,43 +331,20 @@
         .table th { color: var(--muted-text); font-weight: 700; font-size: 0.9em; }
         .table tbody tr:hover { background: rgba(31,111,235,0.05); }
 
-        /* --- Estilos Responsivos para Móviles --- */
+        /* Estilos Responsivos */
         @media (max-width: 600px) {
             body { padding: 0; }
             main { padding: 10px 12px; }
-
-            header h1 {
-                font-size: 1.5em;
-            }
-
-            .card h2 {
-                font-size: 1.2em;
-            }
-
-            /* Hace que los items de trabajador se apilen verticalmente */
-            .worker-item {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
+            header h1 { font-size: 1.5em; }
+            .card h2 { font-size: 1.2em; }
+            .worker-item { flex-direction: column; align-items: flex-start; }
             .worker-actions { width: 100%; margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
             .worker-actions button { width: 100%; }
-
-            /* Ajusta las pestañas para pantallas pequeñas */
-            .tabs {
-                flex-wrap: wrap;
-            }
-
-            .tab-link {
-                padding: 12px 15px;
-                font-size: 0.9em;
-            }
-
-            /* Mejora la visualización de modales en móvil */
+            .tabs { flex-wrap: wrap; }
+            .tab-link { padding: 12px 15px; font-size: 0.9em; }
             .modal { padding: 12px; }
             .modal-content { width: 100%; max-width: 520px; max-height: 85vh; }
         }
-
     </style>
 </head>
 <body>
@@ -414,7 +357,6 @@
         </header>
 
         <main>
-            <!-- Sección para agregar trabajadores -->
             <div class="card">
                 <h2>Registrar Nuevo Trabajador</h2>
                 <div class="form-grid">
@@ -425,19 +367,17 @@
                     <div class="form-group">
                         <label for="daily-salary">Sueldo por Día</label>
                         <input type="number" id="daily-salary" placeholder="Ej: 250.00" min="0" step="0.01">
-                        
                     </div>
                     <div class="form-group checkbox-group">
                         <label for="activate-on-create">Activar en ciclo actual</label>
                         <input type="checkbox" id="activate-on-create" />
                     </div>
                     <div class="form-group button-group">
-                        <button id="add-worker-btn" class="btn btn-primary" style="width:100%">Registrar</button>
+                        <button id="add-worker-btn" class="btn-primary" style="width:100%">Registrar</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Contenedor de Pestañas -->
             <div class="tabs">
                 <button class="tab-link active" data-tab="tab-raya">Lista de Raya</button>
                 <button class="tab-link" data-tab="tab-registrados">Trabajadores</button>
@@ -452,18 +392,14 @@
                         <div class="range" id="week-range">Semana actual</div>
                         <button id="next-week" class="wk-btn" title="Semana siguiente">▶</button>
                     </div>
-                    <div id="worker-list">
-                        <!-- Los trabajadores activos se insertarán aquí -->
-                    </div>
+                    <div id="worker-list"></div>
                 </div>
             </div>
 
             <div id="tab-registrados" class="tab-content">
                 <div class="card">
                     <h2>Trabajadores Registrados</h2>
-                    <div id="registered-worker-list">
-                        <!-- Los trabajadores inactivos se insertarán aquí -->
-                    </div>
+                    <div id="registered-worker-list"></div>
                 </div>
             </div>
 
@@ -483,26 +419,17 @@
                             <label for="filter-to">Hasta</label>
                             <input type="date" id="filter-to">
                         </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
+                        <div class="form-group button-group">
                             <div class="actions">
-                                <button id="clear-filters" class="btn-secondary">Limpiar filtros</button>
+                                <button id="clear-filters" class="btn-secondary">Limpiar</button>
                                 <button id="export-csv" class="btn-info">Exportar CSV</button>
                             </div>
                         </div>
                     </div>
-                    <div id="payment-log-list">
-                        <!-- El registro de pagos se insertará aquí -->
-                    </div>
+                    <div id="payment-log-list"></div>
                     <div id="payment-log-summary" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>Totales visibles:</strong>
-                            <span id="summary-count">0 pagos</span>
-                        </div>
-                        <div>
-                            <strong>Total pagado:</strong>
-                            <span id="summary-total">$0.00</span>
-                        </div>
+                        <div><strong>Totales visibles:</strong> <span id="summary-count">0 pagos</span></div>
+                        <div><strong>Total pagado:</strong> <span id="summary-total">$0.00</span></div>
                     </div>
                 </div>
             </div>
@@ -512,28 +439,24 @@
     <!-- Modales -->
     <div id="loan-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="loan-modal-title">Registrar Préstamo</h2>
-            </div>
+            <div class="modal-header"><h2 id="loan-modal-title">Registrar Préstamo</h2></div>
             <div class="form-group" style="margin-top: 20px;">
                 <label for="loan-amount">Monto del Préstamo</label>
                 <input type="number" id="loan-amount" placeholder="0.00">
             </div>
             <div class="worker-actions">
-                <button id="save-loan-btn" class="btn-primary" style="background-color: var(--success-color);">Guardar</button>
-                <button id="cancel-loan-btn" class="btn-primary" style="background-color: var(--danger-color);">Cancelar</button>
+                <button id="save-loan-btn" class="btn-success">Guardar</button>
+                <button id="cancel-loan-btn" class="btn-danger">Cancelar</button>
             </div>
         </div>
     </div>
 
     <div id="settle-modal" class="modal">
         <div class="modal-content">
-             <div class="modal-header">
-                <h2 id="settle-modal-title">Liquidar Pago</h2>
-            </div>
+            <div class="modal-header"><h2 id="settle-modal-title">Liquidar Pago</h2></div>
             <div class="form-group" style="margin-top: 20px;">
-                <label for="days-worked">Días Trabajados</label>
-                <input type="number" id="days-worked" placeholder="0">
+                <label for="days-worked">Días Trabajados (calculado de asistencia)</label>
+                <input type="number" id="days-worked" placeholder="0" readonly>
             </div>
             <div id="settlement-summary">
                 <div><span>Sueldo Bruto:</span> <span id="summary-gross"></span></div>
@@ -541,10 +464,31 @@
                 <hr>
                 <div><span class="total">Total a Pagar:</span> <span class="total" id="summary-net"></span></div>
             </div>
-             <div class="worker-actions" style="margin-top: 20px;">
-                <button id="confirm-settle-btn" class="btn-primary" style="background-color: var(--success-color);">Confirmar Pago</button>
-                <button id="cancel-settle-btn" class="btn-primary" style="background-color: var(--danger-color);">Cancelar</button>
+            <div class="worker-actions" style="margin-top: 20px;">
+                <button id="confirm-settle-btn" class="btn-success">Confirmar Pago</button>
+                <button id="cancel-settle-btn" class="btn-danger">Cancelar</button>
             </div>
+        </div>
+    </div>
+    
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2 id="edit-modal-title">Editar Trabajador</h2></div>
+            <form id="edit-worker-form" style="margin-top: 20px;">
+                <input type="hidden" id="edit-worker-id">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="edit-worker-name">Nombre</label>
+                    <input type="text" id="edit-worker-name" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="edit-daily-salary">Sueldo por Día</label>
+                    <input type="number" id="edit-daily-salary" min="0" step="0.01" required>
+                </div>
+                <div class="worker-actions">
+                    <button type="submit" class="btn-primary">Guardar Cambios</button>
+                    <button type="button" id="cancel-edit-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -558,19 +502,20 @@
             const workerNameInput = document.getElementById('worker-name');
             const dailySalaryInput = document.getElementById('daily-salary');
             const activateOnCreateInput = document.getElementById('activate-on-create');
-
-            // Elementos de las Pestañas
             const tabsContainer = document.querySelector('.tabs');
             const tabContents = document.querySelectorAll('.tab-content');
-
-            // Modales y sus elementos
+            
+            // Modales
             const loanModal = document.getElementById('loan-modal');
+            const settleModal = document.getElementById('settle-modal');
+            const editModal = document.getElementById('edit-modal');
+            
+            // Elementos de modales
             const loanModalTitle = document.getElementById('loan-modal-title');
             const loanAmountInput = document.getElementById('loan-amount');
             const saveLoanBtn = document.getElementById('save-loan-btn');
             const cancelLoanBtn = document.getElementById('cancel-loan-btn');
 
-            const settleModal = document.getElementById('settle-modal');
             const settleModalTitle = document.getElementById('settle-modal-title');
             const daysWorkedInput = document.getElementById('days-worked');
             const summaryGross = document.getElementById('summary-gross');
@@ -579,7 +524,14 @@
             const confirmSettleBtn = document.getElementById('confirm-settle-btn');
             const cancelSettleBtn = document.getElementById('cancel-settle-btn');
 
-            // Filtros y exportaciones Historial
+            const editModalTitle = document.getElementById('edit-modal-title');
+            const editWorkerForm = document.getElementById('edit-worker-form');
+            const editWorkerIdInput = document.getElementById('edit-worker-id');
+            const editWorkerNameInput = document.getElementById('edit-worker-name');
+            const editDailySalaryInput = document.getElementById('edit-daily-salary');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            
+            // Filtros Historial
             const filterNameInput = document.getElementById('filter-name');
             const filterFromInput = document.getElementById('filter-from');
             const filterToInput = document.getElementById('filter-to');
@@ -587,6 +539,7 @@
             const exportCsvBtn = document.getElementById('export-csv');
             const summaryCountSpan = document.getElementById('summary-count');
             const summaryTotalSpan = document.getElementById('summary-total');
+            
             // Controles de semana
             const prevWeekBtn = document.getElementById('prev-week');
             const nextWeekBtn = document.getElementById('next-week');
@@ -596,19 +549,14 @@
             let paymentLog = [];
             let currentWorkerId = null;
             let currentPaymentData = {};
+            const APP_VERSION = '1.2.0'; 
+            let currentWeekStart = null;
 
-            const APP_VERSION = '1.1.0';
-            let currentWeekStart = null; // inicio de semana visible
-
-            // --- Funciones de Datos y UI ---
             function loadData() {
-                const storedWorkers = localStorage.getItem('simplePayrollWorkers');
-                workers = storedWorkers ? JSON.parse(storedWorkers) : [];
-                const storedLog = localStorage.getItem('simplePayrollLog');
-                paymentLog = storedLog ? JSON.parse(storedLog) : [];
+                workers = JSON.parse(localStorage.getItem('simplePayrollWorkers') || '[]');
+                paymentLog = JSON.parse(localStorage.getItem('simplePayrollLog') || '[]');
                 migrateStorage();
                 renderApp();
-                // Modo oscuro eliminado
             }
 
             function saveData() {
@@ -624,19 +572,16 @@
             function round2(n) {
                 return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
             }
-
+            
             function migrateStorage() {
-                const version = localStorage.getItem('simplePayrollVersion') || '1.0.0';
-                // Asegura campos nuevos
-                workers = (workers || []).map(w => ({
+                 workers = (workers || []).map(w => ({
                     id: w.id ?? Date.now(),
                     name: w.name ?? '',
                     dailySalary: Number(w.dailySalary) || 0,
                     loanAmount: Number(w.loanAmount) || 0,
                     loanDate: w.loanDate || null,
-                    isActive: Boolean(w.isActive),
-                    attendance: w.attendance || {}, // mapa { 'YYYY-MM-DD': 'full'|'half'|'absent' }
-                    currentCycleStart: w.currentCycleStart || null,
+                    isActive: typeof w.isActive === 'boolean' ? w.isActive : true,
+                    attendance: w.attendance || {},
                     createdAt: w.createdAt || new Date().toISOString(),
                     updatedAt: w.updatedAt || new Date().toISOString(),
                 }));
@@ -646,17 +591,13 @@
                     workerName: l.workerName,
                     paymentDate: l.paymentDate || new Date().toISOString(),
                     daysWorked: Number(l.daysWorked) || 0,
-                    grossPay: l.grossPay !== undefined ? Number(l.grossPay) : (Number(l.daysWorked) * (workers.find(w => w.id == l.workerId)?.dailySalary || 0)),
-                    loanApplied: l.loanApplied !== undefined ? Number(l.loanApplied) : Math.min(Number(l.grossPay || 0), Number(workers.find(w => w.id == l.workerId)?.loanAmount || 0)),
-                    netPay: l.netPay !== undefined ? Number(l.netPay) : Math.max(0, (Number(l.grossPay || 0) - Number(l.loanApplied || 0)))
+                    grossPay: l.grossPay !== undefined ? Number(l.grossPay) : 0,
+                    loanApplied: l.loanApplied !== undefined ? Number(l.loanApplied) : 0,
+                    netPay: l.netPay !== undefined ? Number(l.netPay) : 0,
                 }));
-                // Guardar si hicimos cambios de migración
-                localStorage.setItem('simplePayrollVersion', APP_VERSION);
-                localStorage.setItem('simplePayrollWorkers', JSON.stringify(workers));
-                localStorage.setItem('simplePayrollLog', JSON.stringify(paymentLog));
+                saveData();
             }
-
-            // Utilidades de asistencia
+            
             const DAY_NAMES = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
             function startOfWeek(d=new Date()) { const x=new Date(d); const dow=(x.getDay()+6)%7; x.setHours(0,0,0,0); x.setDate(x.getDate()-dow); return x; }
             function getWeekDates(refDate=new Date()) {
@@ -671,8 +612,6 @@
                         const v=(att||{})[ymd(d)];
                         if (v==='full') full++; else if (v==='half') half++;
                     }
-                } else {
-                    Object.values(att||{}).forEach(v=>{ if(v==='full') full++; else if(v==='half') half++; });
                 }
                 return { full, half, days: round2(full + half*0.5) };
             }
@@ -690,7 +629,6 @@
                 const activeWorkers = workers.filter(w => w.isActive);
                 const inactiveWorkers = workers.filter(w => !w.isActive);
 
-                // Semana visible
                 const weekDates = getWeekDates(currentWeekStart || new Date());
                 if (weekRangeEl) weekRangeEl.textContent = formatWeekRange(weekDates);
 
@@ -701,11 +639,9 @@
                         const workerItem = document.createElement('div');
                         workerItem.className = 'worker-item';
                         const loanInfo = worker.loanAmount > 0
-                            ? `<span class="loan-info">Préstamo: ${formatCurrency(worker.loanAmount)} (${new Date(worker.loanDate).toLocaleDateString()})</span>`
+                            ? `<span class="loan-info">Préstamo: ${formatCurrency(worker.loanAmount)}</span>`
                             : '<span>Sin préstamo pendiente</span>';
 
-                        // Asistencia de la semana actual
-                        // usar la semana visible
                         const cols = weekDates.map((d,i)=>{
                             const k = ymd(d);
                             const cur = (worker.attendance||{})[k] || 'empty';
@@ -724,14 +660,9 @@
                         }).join('');
 
                         const attendanceHtml = `
-                            <div class="attendance compact">
+                            <div class="attendance">
                                 <h4>Asistencia de la semana:</h4>
                                 <div class="att-grid">${cols}</div>
-                                <div class="attendance-legend">
-                                    <span class="legend-item"><span class="legend-swatch sw-full"></span> ✓ Completo</span>
-                                    <span class="legend-item"><span class="legend-swatch sw-half"></span> ½ Medio</span>
-                                    <span class="legend-item"><span class="legend-swatch sw-absent"></span> X Falta</span>
-                                </div>
                             </div>`;
 
                         workerItem.innerHTML = `
@@ -742,8 +673,8 @@
                                 ${attendanceHtml}
                             </div>
                             <div class="worker-actions">
-                                <button class="loan-btn" data-id="${worker.id}">Préstamo</button>
-                                <button class="settle-btn" data-id="${worker.id}">Liquidar</button>
+                                <button class="loan-btn btn-info" data-id="${worker.id}">Préstamo</button>
+                                <button class="settle-btn btn-success" data-id="${worker.id}">Liquidar</button>
                             </div>`;
                         workerListDiv.appendChild(workerItem);
                     });
@@ -757,55 +688,34 @@
                         workerItem.className = 'worker-item';
                         workerItem.innerHTML = `
                              <div class="worker-info">
-                                <span><strong>${worker.name}</strong></span>
-                                <span>Sueldo Diario: ${formatCurrency(worker.dailySalary)}</span>
-                            </div>
+                                 <span><strong>${worker.name}</strong></span>
+                                 <span>Sueldo Diario: ${formatCurrency(worker.dailySalary)}</span>
+                             </div>
                             <div class="worker-actions">
-                                <button class="activate-btn" data-id="${worker.id}" class="btn-info" style="background-color: var(--info-color); color: white;">Activar</button>
-                                <button class="edit-worker-btn" data-id="${worker.id}" class="btn-secondary">Editar</button>
-                                <button class="delete-worker-btn" data-id="${worker.id}" class="btn-danger">Eliminar</button>
+                                <button class="activate-btn btn-info" data-id="${worker.id}">Activar</button>
+                                <button class="edit-worker-btn btn-secondary" data-id="${worker.id}">Editar</button>
+                                <button class="delete-worker-btn btn-danger" data-id="${worker.id}">Eliminar</button>
                             </div>`;
                         registeredWorkerListDiv.appendChild(workerItem);
                     });
                 }
 
-                // Aplicar filtros al historial
-                const nameFilter = (filterNameInput?.value || '').trim().toLowerCase();
-                const fromDate = filterFromInput?.value ? new Date(filterFromInput.value) : null;
-                const toDate = filterToInput?.value ? new Date(filterToInput.value) : null;
-
-                let filteredLog = [...paymentLog];
-                if (nameFilter) {
-                    filteredLog = filteredLog.filter(l => (l.workerName || '').toLowerCase().includes(nameFilter));
-                }
-                if (fromDate) {
-                    filteredLog = filteredLog.filter(l => new Date(l.paymentDate) >= fromDate);
-                }
-                if (toDate) {
-                    const toEnd = new Date(toDate);
-                    toEnd.setHours(23,59,59,999);
-                    filteredLog = filteredLog.filter(l => new Date(l.paymentDate) <= toEnd);
-                }
+                renderPaymentLog();
+            }
+            
+            function renderPaymentLog() {
+                paymentLogListDiv.innerHTML = '';
+                const filteredLog = getFilteredLogs();
 
                 if (filteredLog.length === 0) {
-                    paymentLogListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay pagos en el historial.</p>';
+                    paymentLogListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay pagos en el historial para los filtros seleccionados.</p>';
                 } else {
-                    filteredLog.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
                     const table = document.createElement('table');
                     table.className = 'table';
                     table.innerHTML = `
-                        <thead>
-                            <tr>
-                                <th>Trabajador</th>
-                                <th>Fecha</th>
-                                <th>Días</th>
-                                <th>Bruto</th>
-                                <th>Préstamo</th>
-                                <th>Pagado</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    `;
+                        <thead><tr>
+                            <th>Trabajador</th><th>Fecha</th><th>Días</th><th>Bruto</th><th>Préstamo</th><th>Pagado</th>
+                        </tr></thead><tbody></tbody>`;
                     const tbody = table.querySelector('tbody');
                     filteredLog.forEach(log => {
                         const tr = document.createElement('tr');
@@ -813,8 +723,8 @@
                             <td>${log.workerName}</td>
                             <td>${new Date(log.paymentDate).toLocaleDateString()}</td>
                             <td>${log.daysWorked}</td>
-                            <td>${formatCurrency(log.grossPay || (log.daysWorked * (workers.find(w=>w.id==log.workerId)?.dailySalary||0)))}</td>
-                            <td>${formatCurrency(log.loanApplied || 0)}</td>
+                            <td>${formatCurrency(log.grossPay)}</td>
+                            <td>${formatCurrency(log.loanApplied)}</td>
                             <td><strong style="color: var(--success-color);">${formatCurrency(log.netPay)}</strong></td>
                         `;
                         tbody.appendChild(tr);
@@ -822,29 +732,27 @@
                     paymentLogListDiv.appendChild(table);
                 }
 
-                // Totales
-                const total = (filteredLog || []).reduce((acc, l) => acc + Number(l.netPay || 0), 0);
-                if (summaryCountSpan && summaryTotalSpan) {
-                    summaryCountSpan.textContent = `${filteredLog.length} ${filteredLog.length === 1 ? 'pago' : 'pagos'}`;
-                    summaryTotalSpan.textContent = formatCurrency(round2(total));
-                }
+                const total = filteredLog.reduce((acc, l) => acc + Number(l.netPay || 0), 0);
+                summaryCountSpan.textContent = `${filteredLog.length} ${filteredLog.length === 1 ? 'pago' : 'pagos'}`;
+                summaryTotalSpan.textContent = formatCurrency(round2(total));
             }
             
-            // --- Lógica de Modales ---
-            function openModal(modal) { modal.style.display = 'flex'; }
-            function closeModal(modal) { modal.style.display = 'none'; }
+            function openModal(modal) { 
+                modal.style.display = 'flex';
+                setTimeout(() => modal.classList.add('visible'), 10);
+            }
+            function closeModal(modal) { 
+                modal.classList.remove('visible');
+                setTimeout(() => modal.style.display = 'none', 250);
+            }
             
-            // --- Eventos ---
             tabsContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('tab-link')) {
                     const targetTab = e.target.dataset.tab;
                     tabsContainer.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
                     e.target.classList.add('active');
                     tabContents.forEach(content => {
-                        content.classList.remove('active');
-                        if (content.id === targetTab) {
-                            content.classList.add('active');
-                        }
+                        content.classList.toggle('active', content.id === targetTab);
                     });
                 }
             });
@@ -852,123 +760,111 @@
             addWorkerBtn.addEventListener('click', () => {
                 const name = workerNameInput.value.trim();
                 const dailySalary = parseFloat(dailySalaryInput.value);
-                if (!name) { alert('Ingrese un nombre válido.'); return; }
-                if (!(dailySalary > 0)) { alert('Ingrese un sueldo diario válido (> 0).'); return; }
-                // evitar duplicados por nombre (insensible a mayúsculas)
-                const exists = workers.some(w => (w.name || '').trim().toLowerCase() === name.toLowerCase());
-                if (exists) { alert('Ya existe un trabajador con ese nombre.'); return; }
-                const isActive = !!activateOnCreateInput?.checked;
-                const now = new Date().toISOString();
-                if (name && dailySalary > 0) {
-                    workers.push({
-                        id: Date.now(), name, dailySalary: round2(dailySalary),
-                        loanAmount: 0, loanDate: null, isActive,
-                        createdAt: now, updatedAt: now
-                    });
-                    saveData();
-                    renderApp();
-                    workerNameInput.value = '';
-                    dailySalaryInput.value = '';
-                    if (activateOnCreateInput) activateOnCreateInput.checked = false;
-                } else {
+                if (!name || !(dailySalary > 0)) {
                     alert('Por favor, ingrese un nombre y un sueldo diario válidos.');
+                    return;
                 }
+                if (workers.some(w => w.name.trim().toLowerCase() === name.toLowerCase())) {
+                    alert('Ya existe un trabajador con ese nombre.');
+                    return;
+                }
+                const now = new Date().toISOString();
+                workers.push({
+                    id: Date.now(), name, dailySalary: round2(dailySalary),
+                    loanAmount: 0, loanDate: null, isActive: activateOnCreateInput.checked,
+                    attendance: {}, createdAt: now, updatedAt: now
+                });
+                saveData();
+                renderApp();
+                workerNameInput.value = '';
+                dailySalaryInput.value = '';
+                activateOnCreateInput.checked = false;
             });
 
             workerListDiv.addEventListener('click', (e) => {
-                const targetId = e.target.dataset.id;
-                // Manejo de asistencia (botones por estado)
-                if (e.target.classList.contains('att-btn')) {
-                    const wid = e.target.dataset.workerId;
-                    const dateKey = e.target.dataset.date;
-                    const status = e.target.dataset.status; // full | half | absent
-                    const widx = workers.findIndex(w=> w.id == wid);
+                const target = e.target;
+                if (target.closest('.att-btn')) {
+                    const btn = target.closest('.att-btn');
+                    const widx = workers.findIndex(w=> w.id == btn.dataset.workerId);
                     if (widx >= 0) {
-                        workers[widx].attendance = workers[widx].attendance || {};
+                        const dateKey = btn.dataset.date;
+                        const status = btn.dataset.status;
                         const cur = workers[widx].attendance[dateKey] || 'empty';
-                        const next = cur === status ? 'empty' : status; // volver a vacío si se repite
-                        if (next === 'empty') delete workers[widx].attendance[dateKey]; else workers[widx].attendance[dateKey] = next;
+                        const next = cur === status ? 'empty' : status;
+                        if (next === 'empty') delete workers[widx].attendance[dateKey];
+                        else workers[widx].attendance[dateKey] = next;
                         workers[widx].updatedAt = new Date().toISOString();
                         saveData();
                         renderApp();
                     }
                     return;
                 }
+                
+                const workerAction = target.closest('[data-id]');
+                if (!workerAction) return;
 
-                if (!targetId) return;
-                currentWorkerId = targetId;
+                currentWorkerId = workerAction.dataset.id;
                 const worker = workers.find(w => w.id == currentWorkerId);
-                if (e.target.classList.contains('loan-btn')) {
+                
+                if (target.classList.contains('loan-btn')) {
                     loanModalTitle.textContent = `Préstamo para ${worker.name}`;
-                    loanAmountInput.value = ''; openModal(loanModal);
+                    loanAmountInput.value = ''; 
+                    openModal(loanModal);
                 }
-                if (e.target.classList.contains('settle-btn')) {
+                if (target.classList.contains('settle-btn')) {
                     settleModalTitle.textContent = `Liquidar a ${worker.name}`;
-                    // calcular días de la semana visible
                     const weekDates = getWeekDates(currentWeekStart || new Date());
                     const daysCalc = calcAttendanceDays(worker.attendance, weekDates);
                     daysWorkedInput.value = daysCalc.days;
-                    daysWorkedInput.readOnly = true;
+                    
                     const grossPay = round2(daysCalc.days * (worker?.dailySalary || 0));
                     const loanApplied = Math.min(grossPay, Number(worker?.loanAmount || 0));
                     const netPay = round2(grossPay - loanApplied);
-                    const remainingLoan = round2(Math.max(0, Number(worker?.loanAmount || 0) - grossPay));
+                    const remainingLoan = round2(Math.max(0, Number(worker?.loanAmount || 0) - loanApplied));
+                    
                     summaryGross.textContent = formatCurrency(grossPay);
                     summaryLoan.textContent = formatCurrency(worker?.loanAmount || 0);
                     summaryNet.textContent = formatCurrency(netPay);
-                    summaryLoan.title = remainingLoan > 0 ? `Saldo de préstamo restante: ${formatCurrency(remainingLoan)}` : '';
+                    
                     currentPaymentData = { worker, days: daysCalc.days, grossPay, loanApplied, netPay, remainingLoan, weekDates };
                     openModal(settleModal);
                 }
             });
-
+            
             registeredWorkerListDiv.addEventListener('click', (e) => {
-                const target = e.target;
+                const target = e.target.closest('[data-id]');
+                if (!target) return;
+                
+                const workerId = target.dataset.id;
+                const workerIndex = workers.findIndex(w => w.id == workerId);
+                if (workerIndex < 0) return;
+
                 if (target.classList.contains('activate-btn')) {
-                    const workerId = target.dataset.id;
-                    const workerIndex = workers.findIndex(w => w.id == workerId);
                     workers[workerIndex].isActive = true;
                     workers[workerIndex].updatedAt = new Date().toISOString();
                     saveData();
                     renderApp();
-                }
-                if (target.classList.contains('edit-worker-btn')) {
-                    const workerId = target.dataset.id;
-                    const idx = workers.findIndex(w => w.id == workerId);
-                    const w = workers[idx];
-                    const newName = prompt('Editar nombre del trabajador:', w.name);
-                    if (newName === null) return; // cancelado
-                    const trimmed = newName.trim();
-                    if (!trimmed) { alert('El nombre no puede estar vacío.'); return; }
-                    const dup = workers.some(x => x.id != w.id && (x.name||'').trim().toLowerCase() === trimmed.toLowerCase());
-                    if (dup) { alert('Ya existe otro trabajador con ese nombre.'); return; }
-                    const newSalaryStr = prompt('Editar sueldo diario (MXN):', String(w.dailySalary));
-                    if (newSalaryStr === null) return;
-                    const newSalary = parseFloat(newSalaryStr);
-                    if (!(newSalary > 0)) { alert('Sueldo inválido.'); return; }
-                    w.name = trimmed;
-                    w.dailySalary = round2(newSalary);
-                    w.updatedAt = new Date().toISOString();
-                    saveData();
-                    renderApp();
-                }
-                if (target.classList.contains('delete-worker-btn')) {
-                    const workerId = target.dataset.id;
-                    const idx = workers.findIndex(w => w.id == workerId);
-                    const w = workers[idx];
-                    if (!w) return;
-                    if (w.loanAmount > 0) {
-                        const proceed = confirm(`El trabajador tiene un préstamo pendiente de ${formatCurrency(w.loanAmount)}. ¿Eliminar de todas formas? Esta acción no elimina pagos históricos.`);
-                        if (!proceed) return;
+                } else if (target.classList.contains('edit-worker-btn')) {
+                    const worker = workers[workerIndex];
+                    editModalTitle.textContent = `Editar a ${worker.name}`;
+                    editWorkerIdInput.value = worker.id;
+                    editWorkerNameInput.value = worker.name;
+                    editDailySalaryInput.value = worker.dailySalary;
+                    openModal(editModal);
+                } else if (target.classList.contains('delete-worker-btn')) {
+                    const worker = workers[workerIndex];
+                    let confirmDelete = true;
+                    if (worker.loanAmount > 0) {
+                        confirmDelete = confirm(`El trabajador tiene un préstamo pendiente de ${formatCurrency(worker.loanAmount)}. ¿Eliminar de todas formas?`);
                     }
-                    const confirmDelete = confirm('¿Seguro que desea eliminar al trabajador? Esta acción no se puede deshacer.');
-                    if (!confirmDelete) return;
-                    workers.splice(idx, 1);
-                    saveData();
-                    renderApp();
+                    if (confirmDelete && confirm('¿Seguro que desea eliminar al trabajador? Esta acción no se puede deshacer.')) {
+                        workers.splice(workerIndex, 1);
+                        saveData();
+                        renderApp();
+                    }
                 }
             });
-            
+
             saveLoanBtn.addEventListener('click', () => {
                 const amount = parseFloat(loanAmountInput.value);
                 if (amount > 0) {
@@ -981,154 +877,130 @@
                     closeModal(loanModal);
                 }
             });
-            cancelLoanBtn.addEventListener('click', () => closeModal(loanModal));
-
-            // La liquidación se calcula automáticamente desde asistencia; no requerimos input manual
-
+            
             confirmSettleBtn.addEventListener('click', () => {
                 const { worker, days, grossPay, loanApplied, netPay, remainingLoan, weekDates } = currentPaymentData;
                 if (!worker) { alert('Error: trabajador no encontrado.'); return; }
+                
                 paymentLog.push({
                     logId: Date.now(), workerId: worker.id, workerName: worker.name,
                     paymentDate: new Date().toISOString(), daysWorked: days,
                     grossPay: round2(grossPay), loanApplied: round2(loanApplied), netPay: round2(netPay)
                 });
+                
                 const workerIndex = workers.findIndex(w => w.id == worker.id);
                 workers[workerIndex].loanAmount = round2(remainingLoan);
                 workers[workerIndex].loanDate = remainingLoan > 0 ? new Date().toISOString() : null;
-                // Reiniciar ciclo: si queda préstamo, continúa activo; si no, se desactiva
-                workers[workerIndex].isActive = remainingLoan > 0 ? true : false;
-                // Limpiar sólo la asistencia de la semana liquidada
+                workers[workerIndex].isActive = remainingLoan > 0;
+
                 if (Array.isArray(weekDates)) {
                     for (const d of weekDates) delete workers[workerIndex].attendance[ymd(d)];
                 }
-                workers[workerIndex].currentCycleStart = workers[workerIndex].isActive ? new Date().toISOString() : null;
                 workers[workerIndex].updatedAt = new Date().toISOString();
                 saveData();
                 renderApp();
                 closeModal(settleModal);
             });
-            cancelSettleBtn.addEventListener('click', () => closeModal(settleModal));
+            
+            editWorkerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const workerId = editWorkerIdInput.value;
+                const workerIndex = workers.findIndex(w => w.id == workerId);
+                const newName = editWorkerNameInput.value.trim();
+                const newSalary = parseFloat(editDailySalaryInput.value);
 
-            window.onclick = function(event) {
-                if (event.target == loanModal) closeModal(loanModal);
-                if (event.target == settleModal) closeModal(settleModal);
-            }
+                if (!newName || !(newSalary > 0)) {
+                    alert('Nombre o salario inválido.'); return;
+                }
+                
+                if (workers.some(w => w.id != workerId && w.name.trim().toLowerCase() === newName.toLowerCase())) {
+                    alert('Ya existe otro trabajador con ese nombre.'); return;
+                }
 
-            // Modo oscuro eliminado
-
-            // --- Historial: filtros y exportación ---
-            function applyFiltersAndRender() {
-                renderApp();
-            }
-
-            if (filterNameInput) filterNameInput.addEventListener('input', applyFiltersAndRender);
-            if (filterFromInput) filterFromInput.addEventListener('change', applyFiltersAndRender);
-            if (filterToInput) filterToInput.addEventListener('change', applyFiltersAndRender);
-
-            if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', () => {
-                if (filterNameInput) filterNameInput.value = '';
-                if (filterFromInput) filterFromInput.value = '';
-                if (filterToInput) filterToInput.value = '';
-                applyFiltersAndRender();
+                if (workerIndex >= 0) {
+                    workers[workerIndex].name = newName;
+                    workers[workerIndex].dailySalary = round2(newSalary);
+                    workers[workerIndex].updatedAt = new Date().toISOString();
+                    saveData();
+                    renderApp();
+                    closeModal(editModal);
+                }
             });
 
-            function download(filename, content, mime = 'text/plain') {
-                const blob = new Blob([content], { type: mime });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+            cancelLoanBtn.addEventListener('click', () => closeModal(loanModal));
+            cancelSettleBtn.addEventListener('click', () => closeModal(settleModal));
+            cancelEditBtn.addEventListener('click', () => closeModal(editModal));
+            window.onclick = (e) => {
+                if (e.target.classList.contains('modal')) closeModal(e.target);
             }
 
+            // Historial
             function getFilteredLogs() {
-                const name = (filterNameInput?.value || '').trim().toLowerCase();
-                const fromDate = filterFromInput?.value ? new Date(filterFromInput.value) : null;
-                const toDate = filterToInput?.value ? new Date(filterToInput.value) : null;
+                const name = (filterNameInput.value || '').trim().toLowerCase();
+                const fromDate = filterFromInput.value ? new Date(filterFromInput.value) : null;
+                const toDate = filterToInput.value ? new Date(filterToInput.value) : null;
+                
                 let logs = [...paymentLog];
                 if (name) logs = logs.filter(l => (l.workerName || '').toLowerCase().includes(name));
                 if (fromDate) logs = logs.filter(l => new Date(l.paymentDate) >= fromDate);
                 if (toDate) { const t = new Date(toDate); t.setHours(23,59,59,999); logs = logs.filter(l => new Date(l.paymentDate) <= t); }
-                logs.sort((a,b)=> new Date(b.paymentDate) - new Date(a.paymentDate));
-                return logs;
+                
+                return logs.sort((a,b)=> new Date(b.paymentDate) - new Date(a.paymentDate));
             }
 
-            function toCSV(logs) {
+            [filterNameInput, filterFromInput, filterToInput].forEach(el => el.addEventListener('input', renderPaymentLog));
+            clearFiltersBtn.addEventListener('click', () => {
+                filterNameInput.value = '';
+                filterFromInput.value = '';
+                filterToInput.value = '';
+                renderPaymentLog();
+            });
+
+            exportCsvBtn.addEventListener('click', () => {
+                const logs = getFilteredLogs();
                 const headers = ['logId','workerId','workerName','paymentDate','daysWorked','grossPay','loanApplied','netPay'];
                 const rows = logs.map(l => headers.map(h => {
                     const v = l[h] !== undefined ? l[h] : '';
                     const s = (typeof v === 'number') ? String(round2(v)) : String(v || '');
                     return '"' + s.replace(/"/g, '""') + '"';
                 }).join(','));
-                return headers.join(',') + '\n' + rows.join('\n');
-            }
-
-            if (exportCsvBtn) exportCsvBtn.addEventListener('click', () => {
-                const logs = getFilteredLogs();
-                const csv = toCSV(logs);
-                download(`historial_pagos_${new Date().toISOString().slice(0,10)}.csv`, csv, 'text/csv');
+                const csv = headers.join(',') + '\n' + rows.join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `historial_pagos_${new Date().toISOString().slice(0,10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
             });
-
-            // Exportación JSON removida por solicitud del usuario
-
-            // --- Lógica PWA: Registro del Service Worker ---
+            
+            // PWA
             function registerServiceWorker() {
                 if ('serviceWorker' in navigator) {
-                    // El contenido del Service Worker se crea dinámicamente
                     const swContent = `
                         const CACHE_NAME = 'gestion-raya-cache-v1';
-                        // Cacheamos el archivo principal al instalar.
-                        // Usamos una URL relativa para que funcione en cualquier ruta.
                         const urlsToCache = [ '.' ];
-
-                        self.addEventListener('install', event => {
-                            event.waitUntil(
-                                caches.open(CACHE_NAME)
-                                    .then(cache => {
-                                        console.log('Cache abierto');
-                                        return cache.addAll(urlsToCache);
-                                    })
-                            );
+                        self.addEventListener('install', e => {
+                            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache)));
                         });
-
-                        // Estrategia: Cache-First. Intenta servir desde el caché primero.
-                        // Si no lo encuentra, va a la red.
-                        self.addEventListener('fetch', event => {
-                            event.respondWith(
-                                caches.match(event.request)
-                                    .then(response => {
-                                        return response || fetch(event.request);
-                                    })
-                            );
-                        });
-                    `;
-                    // Se crea un "archivo virtual" para el Service Worker
+                        self.addEventListener('fetch', e => {
+                            e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                        });`;
                     const blob = new Blob([swContent], { type: 'application/javascript' });
                     const swUrl = URL.createObjectURL(blob);
-
                     navigator.serviceWorker.register(swUrl)
-                        .then(registration => {
-                            console.log('ServiceWorker registrado con éxito:', registration);
-                        })
-                        .catch(error => {
-                            console.log('Fallo en el registro del ServiceWorker:', error);
-                        });
+                        .then(reg => console.log('ServiceWorker registrado:', reg))
+                        .catch(err => console.log('Fallo en registro de SW:', err));
                 }
             }
 
-            // Controles de semana
-            if (prevWeekBtn) prevWeekBtn.addEventListener('click', ()=> { currentWeekStart = startOfWeek((currentWeekStart||new Date())); currentWeekStart.setDate(currentWeekStart.getDate()-7); renderApp(); });
-            if (nextWeekBtn) nextWeekBtn.addEventListener('click', ()=> { currentWeekStart = startOfWeek((currentWeekStart||new Date())); currentWeekStart.setDate(currentWeekStart.getDate()+7); renderApp(); });
+            prevWeekBtn.addEventListener('click', ()=> { currentWeekStart.setDate(currentWeekStart.getDate()-7); renderApp(); });
+            nextWeekBtn.addEventListener('click', ()=> { currentWeekStart.setDate(currentWeekStart.getDate()+7); renderApp(); });
 
-            // --- Inicialización ---
+            // Inicialización
             currentWeekStart = startOfWeek(new Date());
             loadData();
             registerServiceWorker();
-
         });
     </script>
 </body>
