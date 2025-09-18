@@ -342,8 +342,25 @@
             .worker-actions button { width: 100%; }
             .tabs { flex-wrap: wrap; }
             .tab-link { padding: 12px 15px; font-size: 0.9em; }
-            .modal { padding: 12px; }
-            .modal-content { width: 100%; max-width: 520px; max-height: 85vh; }
+            
+            /* --- Mejoras para modales en móviles --- */
+            .modal { 
+                padding: 5vh 12px 12px;
+                align-items: flex-start; /* Alinea la modal arriba, mejor para teclados */
+            }
+            .modal-content { 
+                width: 100%; 
+                max-height: 90vh; /* Un poco más de altura flexible */
+            }
+            .modal .worker-actions {
+                display: flex; /* Sobrescribe el 'grid' de otras secciones */
+                flex-direction: column; /* Apila los botones */
+                gap: 12px;
+                width: 100%;
+            }
+            .modal .worker-actions button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -460,6 +477,8 @@
             </div>
             <div id="settlement-summary">
                 <div><span>Sueldo Bruto:</span> <span id="summary-gross"></span></div>
+                <div><span>Días completos:</span> <span id="summary-full-days"></span> <small id="summary-full-days-list" style="color: var(--muted-text);"></small></div>
+                <div><span>Medios días:</span> <span id="summary-half-days"></span> <small id="summary-half-days-list" style="color: var(--muted-text);"></small></div>
                 <div><span>(-) Préstamo:</span> <span id="summary-loan" style="color: var(--danger-color); font-weight: bold;"></span></div>
                 <hr>
                 <div><span class="total">Total a Pagar:</span> <span class="total" id="summary-net"></span></div>
@@ -519,6 +538,10 @@
             const settleModalTitle = document.getElementById('settle-modal-title');
             const daysWorkedInput = document.getElementById('days-worked');
             const summaryGross = document.getElementById('summary-gross');
+            const summaryFullDays = document.getElementById('summary-full-days');
+            const summaryHalfDays = document.getElementById('summary-half-days');
+            const summaryFullDaysList = document.getElementById('summary-full-days-list');
+            const summaryHalfDaysList = document.getElementById('summary-half-days-list');
             const summaryLoan = document.getElementById('summary-loan');
             const summaryNet = document.getElementById('summary-net');
             const confirmSettleBtn = document.getElementById('confirm-settle-btn');
@@ -607,13 +630,21 @@
             function ymd(d){ return d.toISOString().slice(0,10); }
             function calcAttendanceDays(att={}, weekDates=null) {
                 let full=0, half=0;
+                let fullDaysList = [];
+                let halfDaysList = [];
                 if (weekDates && weekDates.length) {
-                    for (const d of weekDates) {
+                    weekDates.forEach((d, i) => {
                         const v=(att||{})[ymd(d)];
-                        if (v==='full') full++; else if (v==='half') half++;
-                    }
+                        if (v==='full') {
+                            full++;
+                            fullDaysList.push(DAY_NAMES[i]);
+                        } else if (v==='half') {
+                            half++;
+                            halfDaysList.push(DAY_NAMES[i]);
+                        }
+                    });
                 }
-                return { full, half, days: round2(full + half*0.5) };
+                return { full, half, days: round2(full + half*0.5), fullDaysList, halfDaysList };
             }
             function formatWeekRange(dates) {
                 if (!dates || !dates.length) return '';
@@ -639,7 +670,7 @@
                         const workerItem = document.createElement('div');
                         workerItem.className = 'worker-item';
                         const loanInfo = worker.loanAmount > 0
-                            ? `<span class="loan-info">Préstamo: ${formatCurrency(worker.loanAmount)}</span>`
+                            ? `<span class="loan-info">Préstamo: ${formatCurrency(worker.loanAmount)} (${new Date(worker.loanDate).toLocaleDateString()})</span>`
                             : '<span>Sin préstamo pendiente</span>';
 
                         const cols = weekDates.map((d,i)=>{
@@ -823,6 +854,10 @@
                     const remainingLoan = round2(Math.max(0, Number(worker?.loanAmount || 0) - loanApplied));
                     
                     summaryGross.textContent = formatCurrency(grossPay);
+                    summaryFullDays.textContent = `${daysCalc.full} día(s)`;
+                    summaryHalfDays.textContent = `${daysCalc.half} día(s)`;
+                    summaryFullDaysList.textContent = daysCalc.full > 0 ? `(${daysCalc.fullDaysList.join(', ')})` : '';
+                    summaryHalfDaysList.textContent = daysCalc.half > 0 ? `(${daysCalc.halfDaysList.join(', ')})` : '';
                     summaryLoan.textContent = formatCurrency(worker?.loanAmount || 0);
                     summaryNet.textContent = formatCurrency(netPay);
                     
@@ -1005,4 +1040,8 @@
     </script>
 </body>
 </html>
+
+
+
+
 
