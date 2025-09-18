@@ -318,20 +318,25 @@
         .tab-link:hover { background: rgba(31,111,235,0.06); color: var(--text-color); }
         .tab-link.active { color: #fff; background: var(--primary-color); border-color: var(--primary-color); }
 
-    /* Asistencia semanal */
+    /* Asistencia semanal (compacta en una sola fila) */
     .attendance { margin-top: 10px; }
-    .attendance h4 { margin: 12px 0 8px; font-size: 0.95em; color: var(--text-color); }
-    .week-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-    .week-header .day { text-align: center; font-size: 11px; color: #6b7280; letter-spacing: 0.3px; }
-    .week-header .day .num { display: block; margin-top: 4px; color: #111827; font-weight: 700; font-size: 12px; }
+    .attendance h4 { margin: 10px 0 6px; font-size: 0.92em; color: var(--text-color); }
+    .week-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .week-header .day { text-align: center; font-size: 10px; color: #6b7280; letter-spacing: 0.2px; }
+    .week-header .day .num { display: block; margin-top: 2px; color: #111827; font-weight: 700; font-size: 11px; }
 
-    .attendance-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 6px; }
-    .att-pill { height: 28px; border-radius: 999px; border: none; font-weight: 700; cursor: pointer; transition: transform .05s ease, filter .15s ease; }
-    .att-pill:active { transform: translateY(-1px); }
-    .att-pill.full { background:#d1fae5; color:#065f46; }
-    .att-pill.half { background:#fef9c3; color:#92400e; }
-    .att-pill.absent { background:#fecaca; color:#7f1d1d; }
-    .att-pill.active { outline: 2px solid rgba(0,0,0,0.08); }
+    .attendance-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 6px; }
+    .att-dot { height: 30px; border-radius: 999px; border: 1px solid var(--border-color); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+    .att-dot.empty { color: #9ca3af; }
+    .att-dot.full { background:#10b9811a; color:#065f46; border-color: #34d399; }
+    .att-dot.half { background:#f59e0b1a; color:#92400e; border-color: #fbbf24; }
+    .att-dot.absent { background:#ef44441a; color:#7f1d1d; border-color: #fca5a5; }
+    .attendance-legend { display: flex; gap: 10px; align-items: center; margin-top: 6px; color: #6b7280; font-size: 12px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .sw-full { background:#34d399; }
+    .sw-half { background:#fbbf24; }
+    .sw-absent { background:#f87171; }
 
         /* Tabla de historial */
         #payment-log-list { overflow-x: auto; }
@@ -656,17 +661,23 @@
                         // Asistencia de la semana actual
                         const weekDates = getWeekDates();
                         const headerDays = weekDates.map((d,i)=>`<div class="day">${DAY_NAMES[i]}<span class="num">${d.getDate()}</span></div>`).join('');
-                        const fullRow = weekDates.map(d=>{ const k=ymd(d); const active = (worker.attendance||{})[k]==='full' ? 'active' : ''; return `<button class="att-pill full ${active}" title="Asistió" data-worker-id="${worker.id}" data-date="${k}" data-status="full">✓</button>`; }).join('');
-                        const halfRow = weekDates.map(d=>{ const k=ymd(d); const active = (worker.attendance||{})[k]==='half' ? 'active' : ''; return `<button class="att-pill half ${active}" title="Medio día" data-worker-id="${worker.id}" data-date="${k}" data-status="half">½</button>`; }).join('');
-                        const absentRow = weekDates.map(d=>{ const k=ymd(d); const active = (worker.attendance||{})[k]==='absent' ? 'active' : ''; return `<button class="att-pill absent ${active}" title="Falta" data-worker-id="${worker.id}" data-date="${k}" data-status="absent">X</button>`; }).join('');
+                        const row = weekDates.map(d=>{
+                            const k=ymd(d);
+                            const cur=(worker.attendance||{})[k]||'empty';
+                            const label = cur==='full' ? '✓' : cur==='half' ? '½' : cur==='absent' ? 'X' : '';
+                            return `<button class="att-dot ${cur}" title="Clic para cambiar" data-worker-id="${worker.id}" data-date="${k}">${label}</button>`;
+                        }).join('');
 
                         const attendanceHtml = `
                             <div class="attendance">
                                 <h4>Asistencia de la semana:</h4>
                                 <div class="week-header">${headerDays}</div>
-                                <div class="attendance-row">${fullRow}</div>
-                                <div class="attendance-row">${halfRow}</div>
-                                <div class="attendance-row">${absentRow}</div>
+                                <div class="attendance-row">${row}</div>
+                                <div class="attendance-legend">
+                                    <span class="legend-item"><span class="legend-swatch sw-full"></span> ✓ Completo</span>
+                                    <span class="legend-item"><span class="legend-swatch sw-half"></span> ½ Medio</span>
+                                    <span class="legend-item"><span class="legend-swatch sw-absent"></span> X Falta</span>
+                                </div>
                             </div>`;
 
                         workerItem.innerHTML = `
@@ -812,17 +823,17 @@
 
             workerListDiv.addEventListener('click', (e) => {
                 const targetId = e.target.dataset.id;
-                // Manejo de asistencia
-                if (e.target.classList.contains('att-pill')) {
+                // Manejo de asistencia (un solo botón por día que cicla estados)
+                if (e.target.classList.contains('att-dot')) {
                     const wid = e.target.dataset.workerId;
                     const dateKey = e.target.dataset.date;
-                    const status = e.target.dataset.status;
                     const widx = workers.findIndex(w=> w.id == wid);
                     if (widx >= 0) {
                         workers[widx].attendance = workers[widx].attendance || {};
-                        const cur = workers[widx].attendance[dateKey];
-                        if (cur === status) delete workers[widx].attendance[dateKey];
-                        else workers[widx].attendance[dateKey] = status;
+                        const order = ['empty','full','half','absent'];
+                        const cur = workers[widx].attendance[dateKey] || 'empty';
+                        const next = order[(order.indexOf(cur)+1) % order.length];
+                        if (next === 'empty') delete workers[widx].attendance[dateKey]; else workers[widx].attendance[dateKey] = next;
                         workers[widx].updatedAt = new Date().toISOString();
                         saveData();
                         renderApp();
