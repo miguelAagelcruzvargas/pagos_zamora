@@ -423,7 +423,10 @@
                 <div class="card">
                     <div class="card-title-row">
                         <h2 style="margin:0">Historial de Pagos</h2>
-                        <button id="delete-all-log" class="btn-danger" title="Borrar todo el historial de pagos">Borrar historial</button>
+                        <div>
+                            <button id="debug-log" class="btn" style="margin-right: 8px;" title="Mostrar estado del historial">Debug</button>
+                            <button id="delete-all-log" class="btn-danger" title="Borrar todo el historial de pagos">Borrar historial</button>
+                        </div>
                     </div>
                     <div class="form-grid" style="margin-bottom: 10px;">
                         <div class="form-group">
@@ -578,16 +581,27 @@
             let currentWeekStart = null;
 
             function loadData() {
+                console.log('Cargando datos...');
                 workers = JSON.parse(localStorage.getItem('simplePayrollWorkers') || '[]');
                 paymentLog = JSON.parse(localStorage.getItem('simplePayrollLog') || '[]');
+                console.log('PaymentLog cargado:', paymentLog);
+                console.log('PaymentLog length:', paymentLog.length);
                 migrateStorage();
                 renderApp();
             }
 
             function saveData() {
+                console.log('Guardando datos...');
+                console.log('PaymentLog a guardar:', paymentLog);
+                console.log('PaymentLog length:', paymentLog.length);
                 localStorage.setItem('simplePayrollWorkers', JSON.stringify(workers));
                 localStorage.setItem('simplePayrollLog', JSON.stringify(paymentLog));
                 localStorage.setItem('simplePayrollVersion', APP_VERSION);
+                
+                // Verificar que se guardó correctamente
+                const saved = JSON.parse(localStorage.getItem('simplePayrollLog') || '[]');
+                console.log('PaymentLog guardado verificación:', saved);
+                console.log('PaymentLog guardado length:', saved.length);
             }
 
             function formatCurrency(amount) {
@@ -599,6 +613,10 @@
             }
             
             function migrateStorage() {
+                console.log('Ejecutando migrateStorage...');
+                console.log('PaymentLog antes de migración:', paymentLog);
+                console.log('PaymentLog length antes de migración:', paymentLog.length);
+                
                  workers = (workers || []).map(w => ({
                     id: w.id ?? Date.now(),
                     name: w.name ?? '',
@@ -610,8 +628,8 @@
                     createdAt: w.createdAt || new Date().toISOString(),
                     updatedAt: w.updatedAt || new Date().toISOString(),
                 }));
-                paymentLog = (paymentLog || []).map(l => ({
-                    logId: l.logId ?? Date.now(),
+                paymentLog = (paymentLog || []).map((l, index) => ({
+                    logId: l.logId ?? Date.now() + index, // Agregar index para evitar colisiones
                     workerId: l.workerId,
                     workerName: l.workerName,
                     paymentDate: l.paymentDate || new Date().toISOString(),
@@ -620,6 +638,9 @@
                     loanApplied: l.loanApplied !== undefined ? Number(l.loanApplied) : 0,
                     netPay: l.netPay !== undefined ? Number(l.netPay) : 0,
                 }));
+                
+                console.log('PaymentLog después de migración:', paymentLog);
+                console.log('PaymentLog length después de migración:', paymentLog.length);
                 saveData();
             }
             
@@ -809,6 +830,8 @@
                     attendance: {}, createdAt: now, updatedAt: now
                 });
                 saveData();
+                // Al crear un trabajador, volver a la semana actual
+                currentWeekStart = startOfWeek(new Date());
                 renderApp();
                 workerNameInput.value = '';
                 dailySalaryInput.value = '';
@@ -881,6 +904,8 @@
                     workers[workerIndex].isActive = true;
                     workers[workerIndex].updatedAt = new Date().toISOString();
                     saveData();
+                    // Al reactivar, saltar a la semana actual
+                    currentWeekStart = startOfWeek(new Date());
                     renderApp();
                 } else if (target.classList.contains('edit-worker-btn')) {
                     const worker = workers[workerIndex];
@@ -920,11 +945,26 @@
                 const { worker, days, grossPay, loanApplied, netPay, remainingLoan, weekDates } = currentPaymentData;
                 if (!worker) { alert('Error: trabajador no encontrado.'); return; }
                 
-                paymentLog.push({
-                    logId: Date.now(), workerId: worker.id, workerName: worker.name,
+                console.log('Antes de agregar - PaymentLog length:', paymentLog.length);
+                console.log('PaymentLog actual:', paymentLog);
+                
+                // Generar un ID único que no exista ya en el log
+                let newLogId = Date.now();
+                while (paymentLog.some(log => log.logId === newLogId)) {
+                    newLogId += 1;
+                }
+                
+                const newPayment = {
+                    logId: newLogId, workerId: worker.id, workerName: worker.name,
                     paymentDate: new Date().toISOString(), daysWorked: days,
                     grossPay: round2(grossPay), loanApplied: round2(loanApplied), netPay: round2(netPay)
-                });
+                };
+                
+                console.log('Nuevo pago a agregar:', newPayment);
+                paymentLog.push(newPayment);
+                
+                console.log('Después de agregar - PaymentLog length:', paymentLog.length);
+                console.log('PaymentLog actualizado:', paymentLog);
                 
                 const workerIndex = workers.findIndex(w => w.id == worker.id);
                 workers[workerIndex].loanAmount = round2(remainingLoan);
@@ -1011,6 +1051,23 @@
                 a.click();
                 URL.revokeObjectURL(url);
             });
+
+            // Debug button para diagnosticar problemas
+            const debugBtn = document.getElementById('debug-log');
+            if (debugBtn) {
+                debugBtn.addEventListener('click', () => {
+                    console.log('=== DEBUG PAYMENT LOG ===');
+                    console.log('PaymentLog array:', paymentLog);
+                    console.log('PaymentLog length:', paymentLog.length);
+                    console.log('LocalStorage paymentLog:', localStorage.getItem('simplePayrollLog'));
+                    console.log('Parsed localStorage:', JSON.parse(localStorage.getItem('simplePayrollLog') || '[]'));
+                    
+                    alert(`Debug Info:
+- Array length: ${paymentLog.length}
+- LocalStorage entries: ${JSON.parse(localStorage.getItem('simplePayrollLog') || '[]').length}
+- Check console for full details`);
+                });
+            }
 
             // Eliminar historial completo
             const deleteAllBtn = document.getElementById('delete-all-log');
