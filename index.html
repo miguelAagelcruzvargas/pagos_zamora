@@ -647,8 +647,8 @@
                 console.log('PaymentLog antes de migración:', paymentLog);
                 console.log('PaymentLog length antes de migración:', paymentLog.length);
                 
-                 workers = (workers || []).map(w => ({
-                    id: w.id ?? Date.now(),
+                      workers = (workers || []).map((w, index) => ({
+                          id: w.id ?? (Date.now() + index),
                     name: w.name ?? '',
                     dailySalary: Number(w.dailySalary) || 0,
                     loanAmount: Number(w.loanAmount) || 0,
@@ -1259,7 +1259,24 @@
             function registerServiceWorker() {
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('service-worker.js')
-                        .then(reg => console.log('ServiceWorker registrado:', reg))
+                        .then(async (reg) => {
+                            console.log('ServiceWorker registrado:', reg);
+                            // Avisar al SW que salte la espera y tome control
+                            if (reg.waiting) {
+                                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                            reg.addEventListener('updatefound', () => {
+                                const sw = reg.installing;
+                                if (!sw) return;
+                                sw.addEventListener('statechange', () => {
+                                    if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // Nuevo SW instalado, recargar para obtener la última versión
+                                        console.log('Nuevo Service Worker instalado, recargando para actualizar.');
+                                        window.location.reload();
+                                    }
+                                });
+                            });
+                        })
                         .catch(err => console.log('Fallo en registro de SW:', err));
                 }
             }
