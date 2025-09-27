@@ -454,6 +454,29 @@
                         <div><strong>Total pagado:</strong> <span id="summary-total">$0.00</span></div>
                     </div>
                 </div>
+
+                <!-- Historial de Préstamos -->
+                <div class="card">
+                    <div class="card-title-row">
+                        <h2 style="margin:0">Historial de Préstamos</h2>
+                        <div>
+                            <button id="delete-all-loans" class="btn-danger" title="Borrar todo el historial de préstamos">Borrar historial</button>
+                        </div>
+                    </div>
+                    <div class="form-grid" style="margin-bottom: 10px;">
+                        <!-- Reutiliza los mismos filtros de arriba -->
+                        <div class="form-group button-group">
+                            <div class="actions">
+                                <button id="export-loans-csv" class="btn-info">Exportar CSV</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="loan-log-list"></div>
+                    <div id="loan-log-summary" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div><strong>Totales visibles:</strong> <span id="loan-summary-count">0 préstamos</span></div>
+                        <div><strong>Total prestado:</strong> <span id="loan-summary-total">$0.00</span></div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -523,6 +546,7 @@
             const workerListDiv = document.getElementById('worker-list');
             const registeredWorkerListDiv = document.getElementById('registered-worker-list');
             const paymentLogListDiv = document.getElementById('payment-log-list');
+            const loanLogListDiv = document.getElementById('loan-log-list');
             const workerNameInput = document.getElementById('worker-name');
             const dailySalaryInput = document.getElementById('daily-salary');
             const activateOnCreateInput = document.getElementById('activate-on-create');
@@ -565,8 +589,11 @@
             const filterToInput = document.getElementById('filter-to');
             const clearFiltersBtn = document.getElementById('clear-filters');
             const exportCsvBtn = document.getElementById('export-csv');
+            const exportLoansCsvBtn = document.getElementById('export-loans-csv');
             const summaryCountSpan = document.getElementById('summary-count');
             const summaryTotalSpan = document.getElementById('summary-total');
+            const loanSummaryCountSpan = document.getElementById('loan-summary-count');
+            const loanSummaryTotalSpan = document.getElementById('loan-summary-total');
             
             // Controles de semana
             const prevWeekBtn = document.getElementById('prev-week');
@@ -575,6 +602,7 @@
 
             let workers = [];
             let paymentLog = [];
+            let loanLog = [];
             let currentWorkerId = null;
             let currentPaymentData = {};
             const APP_VERSION = '1.2.0'; 
@@ -584,6 +612,7 @@
                 console.log('Cargando datos...');
                 workers = JSON.parse(localStorage.getItem('simplePayrollWorkers') || '[]');
                 paymentLog = JSON.parse(localStorage.getItem('simplePayrollLog') || '[]');
+                loanLog = JSON.parse(localStorage.getItem('simplePayrollLoanLog') || '[]');
                 console.log('PaymentLog cargado:', paymentLog);
                 console.log('PaymentLog length:', paymentLog.length);
                 migrateStorage();
@@ -596,6 +625,7 @@
                 console.log('PaymentLog length:', paymentLog.length);
                 localStorage.setItem('simplePayrollWorkers', JSON.stringify(workers));
                 localStorage.setItem('simplePayrollLog', JSON.stringify(paymentLog));
+                localStorage.setItem('simplePayrollLoanLog', JSON.stringify(loanLog));
                 localStorage.setItem('simplePayrollVersion', APP_VERSION);
                 
                 // Verificar que se guardó correctamente
@@ -638,6 +668,13 @@
                     loanApplied: l.loanApplied !== undefined ? Number(l.loanApplied) : 0,
                     netPay: l.netPay !== undefined ? Number(l.netPay) : 0,
                 }));
+                loanLog = (loanLog || []).map((l, index) => ({
+                    loanId: l.loanId ?? Date.now() + index,
+                    workerId: l.workerId,
+                    workerName: l.workerName,
+                    amount: l.amount !== undefined ? Number(l.amount) : 0,
+                    loanDate: l.loanDate || new Date().toISOString(),
+                }));
                 
                 console.log('PaymentLog después de migración:', paymentLog);
                 console.log('PaymentLog length después de migración:', paymentLog.length);
@@ -679,6 +716,7 @@
                 workerListDiv.innerHTML = '';
                 registeredWorkerListDiv.innerHTML = '';
                 paymentLogListDiv.innerHTML = '';
+                if (loanLogListDiv) loanLogListDiv.innerHTML = '';
 
                 const activeWorkers = workers.filter(w => w.isActive);
                 const inactiveWorkers = workers.filter(w => !w.isActive);
@@ -755,6 +793,7 @@
                 }
 
                 renderPaymentLog();
+                renderLoanLog();
             }
             
             function renderPaymentLog() {
@@ -790,6 +829,51 @@
                 const total = filteredLog.reduce((acc, l) => acc + Number(l.netPay || 0), 0);
                 summaryCountSpan.textContent = `${filteredLog.length} ${filteredLog.length === 1 ? 'pago' : 'pagos'}`;
                 summaryTotalSpan.textContent = formatCurrency(round2(total));
+            }
+
+            // Historial de Préstamos
+            function renderLoanLog() {
+                if (!loanLogListDiv) return;
+                loanLogListDiv.innerHTML = '';
+                const filtered = getFilteredLoans();
+
+                if (filtered.length === 0) {
+                    loanLogListDiv.innerHTML = '<p style="text-align:center; color:#777;">No hay préstamos para los filtros seleccionados.</p>';
+                } else {
+                    const table = document.createElement('table');
+                    table.className = 'table';
+                    table.innerHTML = `
+                        <thead><tr>
+                            <th>Trabajador</th><th>Fecha</th><th>Monto</th><th>Acciones</th>
+                        </tr></thead><tbody></tbody>`;
+                    const tbody = table.querySelector('tbody');
+                    filtered.forEach(l => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${l.workerName}</td>
+                            <td>${new Date(l.loanDate).toLocaleDateString()}</td>
+                            <td><strong>${formatCurrency(l.amount)}</strong></td>
+                            <td><button class="btn-danger btn-delete-loan" data-loan-id="${l.loanId}">Eliminar</button></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    loanLogListDiv.appendChild(table);
+                }
+
+                const total = filtered.reduce((acc, l) => acc + Number(l.amount || 0), 0);
+                if (loanSummaryCountSpan) loanSummaryCountSpan.textContent = `${filtered.length} ${filtered.length === 1 ? 'préstamo' : 'préstamos'}`;
+                if (loanSummaryTotalSpan) loanSummaryTotalSpan.textContent = formatCurrency(round2(total));
+            }
+
+            function getFilteredLoans() {
+                const name = (filterNameInput.value || '').trim().toLowerCase();
+                const fromDate = filterFromInput.value ? new Date(filterFromInput.value) : null;
+                const toDate = filterToInput.value ? new Date(filterToInput.value) : null;
+                let logs = [...loanLog];
+                if (name) logs = logs.filter(l => (l.workerName || '').toLowerCase().includes(name));
+                if (fromDate) logs = logs.filter(l => new Date(l.loanDate) >= fromDate);
+                if (toDate) { const t = new Date(toDate); t.setHours(23,59,59,999); logs = logs.filter(l => new Date(l.loanDate) <= t); }
+                return logs.sort((a,b)=> new Date(b.loanDate) - new Date(a.loanDate));
             }
             
             function openModal(modal) { 
@@ -937,6 +1021,18 @@
                     workers[workerIndex].loanAmount = round2(prevLoan + amount);
                     workers[workerIndex].loanDate = new Date().toISOString();
                     workers[workerIndex].updatedAt = new Date().toISOString();
+
+                    // Registrar entrada en historial de préstamos
+                    const w = workers[workerIndex];
+                    let newLoanId = Date.now();
+                    while (loanLog.some(l => l.loanId === newLoanId)) newLoanId += 1;
+                    loanLog.push({
+                        loanId: newLoanId,
+                        workerId: w.id,
+                        workerName: w.name,
+                        amount: round2(amount),
+                        loanDate: new Date().toISOString()
+                    });
                     saveData();
                     renderApp();
                     closeModal(loanModal);
@@ -1029,11 +1125,16 @@
             }
 
             [filterNameInput, filterFromInput, filterToInput].forEach(el => el.addEventListener('input', renderPaymentLog));
+            // Que los filtros también redibujen préstamos
+            if (filterNameInput && filterFromInput && filterToInput) {
+                [filterNameInput, filterFromInput, filterToInput].forEach(el => el.addEventListener('input', renderLoanLog));
+            }
             clearFiltersBtn.addEventListener('click', () => {
                 filterNameInput.value = '';
                 filterFromInput.value = '';
                 filterToInput.value = '';
                 renderPaymentLog();
+                renderLoanLog();
             });
 
             exportCsvBtn.addEventListener('click', () => {
@@ -1084,6 +1185,40 @@
                 });
             }
 
+            // Exportar CSV Préstamos
+            if (exportLoansCsvBtn) {
+                exportLoansCsvBtn.addEventListener('click', () => {
+                    const logs = getFilteredLoans();
+                    const headers = ['loanId','workerId','workerName','loanDate','amount'];
+                    const rows = logs.map(l => headers.map(h => {
+                        const v = l[h] !== undefined ? l[h] : '';
+                        const s = (typeof v === 'number') ? String(round2(v)) : String(v || '');
+                        return '"' + s.replace(/"/g, '""') + '"';
+                    }).join(','));
+                    const csv = headers.join(',') + '\n' + rows.join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `historial_prestamos_${new Date().toISOString().slice(0,10)}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            }
+
+            // Eliminar historial completo de préstamos
+            const deleteAllLoansBtn = document.getElementById('delete-all-loans');
+            if (deleteAllLoansBtn) {
+                deleteAllLoansBtn.addEventListener('click', () => {
+                    if (!loanLog.length) return;
+                    if (confirm('¿Borrar TODO el historial de préstamos? Esta acción no se puede deshacer.')) {
+                        loanLog = [];
+                        saveData();
+                        renderLoanLog();
+                    }
+                });
+            }
+
             // Eliminar pago individual
             paymentLogListDiv.addEventListener('click', (e) => {
                 const btn = e.target.closest('.btn-delete-log');
@@ -1096,6 +1231,29 @@
                     renderPaymentLog();
                 }
             });
+
+            // Eliminar préstamo individual
+            if (loanLogListDiv) {
+                loanLogListDiv.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.btn-delete-loan');
+                    if (!btn) return;
+                    const loanId = btn.dataset.loanId;
+                    const idx = loanLog.findIndex(l => String(l.loanId) === String(loanId));
+                    if (idx >= 0 && confirm('¿Eliminar este registro de préstamo?')) {
+                        // También ajustar el saldo de préstamo del trabajador
+                        const entry = loanLog[idx];
+                        const widx = workers.findIndex(w => String(w.id) === String(entry.workerId));
+                        if (widx >= 0) {
+                            const current = Number(workers[widx].loanAmount) || 0;
+                            workers[widx].loanAmount = round2(Math.max(0, current - Number(entry.amount || 0)));
+                            workers[widx].updatedAt = new Date().toISOString();
+                        }
+                        loanLog.splice(idx, 1);
+                        saveData();
+                        renderApp();
+                    }
+                });
+            }
             
             // PWA
             function registerServiceWorker() {
