@@ -932,7 +932,9 @@
                 const amount = parseFloat(loanAmountInput.value);
                 if (amount > 0) {
                     const workerIndex = workers.findIndex(w => w.id == currentWorkerId);
-                    workers[workerIndex].loanAmount = round2(amount);
+                    // Acumular el préstamo en lugar de sobrescribirlo
+                    const prevLoan = Number(workers[workerIndex].loanAmount) || 0;
+                    workers[workerIndex].loanAmount = round2(prevLoan + amount);
                     workers[workerIndex].loanDate = new Date().toISOString();
                     workers[workerIndex].updatedAt = new Date().toISOString();
                     saveData();
