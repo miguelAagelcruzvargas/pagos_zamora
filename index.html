@@ -507,7 +507,10 @@
                 <div><span>Sueldo Bruto:</span> <span id="summary-gross"></span></div>
                 <div><span>Días completos:</span> <span id="summary-full-days"></span> <small id="summary-full-days-list" style="color: var(--muted-text);"></small></div>
                 <div><span>Medios días:</span> <span id="summary-half-days"></span> <small id="summary-half-days-list" style="color: var(--muted-text);"></small></div>
-                <div><span>(-) Préstamo:</span> <span id="summary-loan" style="color: var(--danger-color); font-weight: bold;"></span></div>
+                <div><span>Saldo préstamo (antes):</span> <span id="summary-loan" style="color: var(--danger-color); font-weight: bold;"></span></div>
+                <div><span>(-) Descuento aplicado:</span> <span id="summary-loan-applied"></span></div>
+                <div><span>Saldo préstamo (después):</span> <span id="summary-loan-remaining"></span></div>
+                <div id="summary-loans-recent" style="margin-top: 6px; color: var(--muted-text); font-size: 12px;"></div>
                 <hr>
                 <div><span class="total">Total a Pagar:</span> <span class="total" id="summary-net"></span></div>
             </div>
@@ -572,7 +575,10 @@
             const summaryFullDaysList = document.getElementById('summary-full-days-list');
             const summaryHalfDaysList = document.getElementById('summary-half-days-list');
             const summaryLoan = document.getElementById('summary-loan');
+            const summaryLoanApplied = document.getElementById('summary-loan-applied');
+            const summaryLoanRemaining = document.getElementById('summary-loan-remaining');
             const summaryNet = document.getElementById('summary-net');
+            const summaryLoansRecent = document.getElementById('summary-loans-recent');
             const confirmSettleBtn = document.getElementById('confirm-settle-btn');
             const cancelSettleBtn = document.getElementById('cancel-settle-btn');
 
@@ -712,6 +718,24 @@
                 return fmt({ day:'numeric', month:'short' });
             }
 
+            // --- Préstamos: cálculo por registros individuales ---
+            function getWorkerLoans(workerId) {
+                return (loanLog || []).filter(l => String(l.workerId) === String(workerId));
+            }
+            function getOutstandingLoan(workerId) {
+                const totalLoans = getWorkerLoans(workerId).reduce((a, l) => a + Number(l.amount || 0), 0);
+                const totalApplied = (paymentLog || []).filter(p => String(p.workerId) === String(workerId))
+                    .reduce((a, p) => a + Number(p.loanApplied || 0), 0);
+                return round2(totalLoans - totalApplied);
+            }
+            function getLoanStats(workerId) {
+                const loans = getWorkerLoans(workerId);
+                const count = loans.length;
+                const lastDate = count ? loans.slice().sort((a,b)=> new Date(b.loanDate) - new Date(a.loanDate))[0].loanDate : null;
+                const outstanding = getOutstandingLoan(workerId);
+                return { count, lastDate, outstanding };
+            }
+
             function renderApp() {
                 workerListDiv.innerHTML = '';
                 registeredWorkerListDiv.innerHTML = '';
@@ -730,9 +754,12 @@
                     activeWorkers.forEach(worker => {
                         const workerItem = document.createElement('div');
                         workerItem.className = 'worker-item';
-                        const loanInfo = worker.loanAmount > 0
-                            ? `<span class="loan-info">Préstamo: ${formatCurrency(worker.loanAmount)} (${new Date(worker.loanDate).toLocaleDateString()})</span>`
-                            : '<span>Sin préstamo pendiente</span>';
+                        // Mostrar info de préstamos acumulados y últimos registros
+                        const { count: loanCount, lastDate, outstanding } = getLoanStats(worker.id);
+                        const lastLoanDate = lastDate ? new Date(lastDate).toLocaleDateString() : null;
+                        const loanInfo = Number(outstanding) > 0
+                            ? `<span class="loan-info">Préstamos: ${loanCount} (total ${formatCurrency(outstanding)}${lastLoanDate ? `; último ${lastLoanDate}` : ''})</span>`
+                            : '<span>Sin préstamos</span>';
 
                         const cols = weekDates.map((d,i)=>{
                             const k = ymd(d);
@@ -778,10 +805,16 @@
                     inactiveWorkers.forEach(worker => {
                         const workerItem = document.createElement('div');
                         workerItem.className = 'worker-item';
+                        const { count: loanCount, lastDate, outstanding } = getLoanStats(worker.id);
+                        const lastLoanDate = lastDate ? new Date(lastDate).toLocaleDateString() : null;
+                        const loanInfo = Number(outstanding) > 0
+                            ? `<span class="loan-info">Préstamos: ${loanCount} (total ${formatCurrency(outstanding)}${lastLoanDate ? `; último ${lastLoanDate}` : ''})</span>`
+                            : '<span>Sin préstamos</span>';
                         workerItem.innerHTML = `
                              <div class="worker-info">
                                  <span><strong>${worker.name}</strong></span>
                                  <span>Sueldo Diario: ${formatCurrency(worker.dailySalary)}</span>
+                                 ${loanInfo}
                              </div>
                             <div class="worker-actions">
                                 <button class="activate-btn btn-info" data-id="${worker.id}">Activar</button>
@@ -959,16 +992,30 @@
                     daysWorkedInput.value = daysCalc.days;
                     
                     const grossPay = round2(daysCalc.days * (worker?.dailySalary || 0));
-                    const loanApplied = Math.min(grossPay, Number(worker?.loanAmount || 0));
+                    const outstandingBefore = getOutstandingLoan(worker.id);
+                    const loanApplied = Math.min(grossPay, Number(outstandingBefore || 0));
                     const netPay = round2(grossPay - loanApplied);
-                    const remainingLoan = round2(Math.max(0, Number(worker?.loanAmount || 0) - loanApplied));
+                    const remainingLoan = round2(Math.max(0, Number(outstandingBefore || 0) - loanApplied));
                     
                     summaryGross.textContent = formatCurrency(grossPay);
                     summaryFullDays.textContent = `${daysCalc.full} día(s)`;
                     summaryHalfDays.textContent = `${daysCalc.half} día(s)`;
                     summaryFullDaysList.textContent = daysCalc.full > 0 ? `(${daysCalc.fullDaysList.join(', ')})` : '';
                     summaryHalfDaysList.textContent = daysCalc.half > 0 ? `(${daysCalc.halfDaysList.join(', ')})` : '';
-                    summaryLoan.textContent = formatCurrency(worker?.loanAmount || 0);
+                    summaryLoan.textContent = formatCurrency(outstandingBefore);
+                    summaryLoanApplied.textContent = formatCurrency(loanApplied);
+                    summaryLoanRemaining.textContent = formatCurrency(remainingLoan);
+                    // Mostrar últimos préstamos individuales registrados del trabajador (máx 3)
+                    const recentLoans = (loanLog || [])
+                        .filter(l => String(l.workerId) === String(worker.id))
+                        .sort((a,b)=> new Date(b.loanDate) - new Date(a.loanDate))
+                        .slice(0,3);
+                    if (recentLoans.length) {
+                        const txt = recentLoans.map(l => `${new Date(l.loanDate).toLocaleDateString()} ${formatCurrency(l.amount)}`).join(' • ');
+                        summaryLoansRecent.textContent = `Préstamos recientes: ${txt}${loanLog.filter(l=> String(l.workerId)===String(worker.id)).length>recentLoans.length ? ' …' : ''}`;
+                    } else {
+                        summaryLoansRecent.textContent = '';
+                    }
                     summaryNet.textContent = formatCurrency(netPay);
                     
                     currentPaymentData = { worker, days: daysCalc.days, grossPay, loanApplied, netPay, remainingLoan, weekDates };
@@ -1016,10 +1063,7 @@
                 const amount = parseFloat(loanAmountInput.value);
                 if (amount > 0) {
                     const workerIndex = workers.findIndex(w => w.id == currentWorkerId);
-                    // Acumular el préstamo en lugar de sobrescribirlo
-                    const prevLoan = Number(workers[workerIndex].loanAmount) || 0;
-                    workers[workerIndex].loanAmount = round2(prevLoan + amount);
-                    workers[workerIndex].loanDate = new Date().toISOString();
+                    // No modificar un saldo acumulado; registrar préstamo como entrada individual
                     workers[workerIndex].updatedAt = new Date().toISOString();
 
                     // Registrar entrada en historial de préstamos
@@ -1065,10 +1109,7 @@
                 console.log('PaymentLog actualizado:', paymentLog);
                 
                 const workerIndex = workers.findIndex(w => w.id == worker.id);
-                workers[workerIndex].loanAmount = round2(remainingLoan);
-                workers[workerIndex].loanDate = remainingLoan > 0 ? new Date().toISOString() : null;
-                workers[workerIndex].isActive = remainingLoan > 0;
-
+                // No tocar saldo en trabajador; se deriva de logs. Limpiar asistencia esta semana.
                 if (Array.isArray(weekDates)) {
                     for (const d of weekDates) delete workers[workerIndex].attendance[ymd(d)];
                 }
@@ -1240,14 +1281,7 @@
                     const loanId = btn.dataset.loanId;
                     const idx = loanLog.findIndex(l => String(l.loanId) === String(loanId));
                     if (idx >= 0 && confirm('¿Eliminar este registro de préstamo?')) {
-                        // También ajustar el saldo de préstamo del trabajador
-                        const entry = loanLog[idx];
-                        const widx = workers.findIndex(w => String(w.id) === String(entry.workerId));
-                        if (widx >= 0) {
-                            const current = Number(workers[widx].loanAmount) || 0;
-                            workers[widx].loanAmount = round2(Math.max(0, current - Number(entry.amount || 0)));
-                            workers[widx].updatedAt = new Date().toISOString();
-                        }
+                        // No hay saldo directo en el trabajador; el total se recalcula de logs.
                         loanLog.splice(idx, 1);
                         saveData();
                         renderApp();
